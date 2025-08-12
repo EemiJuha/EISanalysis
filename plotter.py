@@ -20,7 +20,8 @@ def bring_to_front():
 root = tk.Tk()
 root.withdraw()
 root.attributes('-topmost',True)
-fileNameList = tkinter.filedialog.askopenfilenames()
+start_folder = r'C:\Users\nieminen\Desktop\Datat verkkolevyltä\SMS-horiba2025'
+fileNameList = tkinter.filedialog.askopenfilenames(title='Select Files For Plotting', initialdir=start_folder)
 root.destroy()
 dummyFile = 'C:/Users/eemin/OneDrive/Tiedostot/Python Scripts/SMS-horiba2025/20250429-CV-measurements-1mMRuHex-again both directions/CVOx200mVs.txt'
 exampleFile = dummyFile
