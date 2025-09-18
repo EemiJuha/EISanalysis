@@ -51,19 +51,24 @@ color_cycle = itertools.cycle(colors)
 file_colors = {file: next(color_cycle) for file in fileNameList if file.endswith('.txt')}
 fitfreq = np.logspace(2, 5, 50)
 #plotter that plots the given data into the defined subplots
-def plotter(freq,Z):
+def plotter(freq,Z,linestyle):
     Zar = np.array(Z)
     freqsar = np.array(freq)
-    ax_nyq.plot(Zar.real,-Zar.imag, label=fileName, color=file_colors[file])
-    ax_zre.plot(freqsar,Zar.real,label=fileName, color=file_colors[file])
-    ax_zim.plot(freqsar,Zar.imag,label=fileName, color=file_colors[file])
-    ax_phase.plot(freqsar,np.angle(Zar, deg=True),label=fileName, color=file_colors[file])
+    if linestyle == '--':
+        label = 'Fit'
+    elif linestyle == 'o':
+        label = fileName
+    ax_nyq.plot(Zar.real,-Zar.imag, linestyle, label=label, color=file_colors[file])
+    ax_zre.plot(freqsar,Zar.real, linestyle, label=label, color=file_colors[file])
+    ax_zim.plot(freqsar,Zar.imag, linestyle, label=label, color=file_colors[file])
+    ax_phase.plot(freqsar,np.angle(Zar, deg=True), linestyle, label=label, color=file_colors[file])
 
 for file in fileNameList:
     if isEISfile(file):
         fileName = os.path.basename(file)
         freqs, Z = preprocessing.readCHInstruments(file)
-        plotter(freqs,Z)
+        scale = float(max(np.real(Z)))
+        plotter(freqs,Z/scale,'o')
         # Zar = np.array(Z)
         # freqsar = np.array(freqs)
         # ax_nyq.plot(Zar.real,-Zar.imag, label=fileName, color=file_colors[file])
@@ -71,14 +76,36 @@ for file in fileNameList:
         # ax_zim.plot(freqsar,Zar.imag,label=fileName, color=file_colors[file])
         # ax_phase.plot(freqsar,np.angle(Zar, deg=True),label=fileName, color=file_colors[file])
         freqs, Z = preprocessing.readCHInstruments(file)
+        freqscut = freqs[:-8]
+        Zcut = Z[:-8]
+        scale = float(max(np.real(Z)))
+        plotter(freqs,Z/scale,'o')
         data = {
                 'file': file,
-                "f": freqs,
-                "Z": Z
+                "f": freqscut,
+                "Z": Zcut,
+                "scale": scale
                 }
         fitObj = fittingmodule.fitting(data)
-        fitObj.predict(fitfreq)
+        fitZ = fitObj.predict(fitfreq)
+        plotter(fitfreq,fitZ,'--')
         dictlist.append(data)
     else:
         continue
-    
+
+handles, labels = [],[]
+
+for ax in (ax_nyq, ax_zre, ax_zim, ax_phase):
+    h, l = ax.get_legend_handles_labels()
+    handles.extend(h)
+    labels.extend(l)
+
+from collections import OrderedDict   
+by_label = OrderedDict(zip(labels, handles))
+
+fig.legend(
+    by_label.values(), by_label.keys(),
+    loc='lower center',
+    ncol=3,           # spread across columns
+    bbox_to_anchor=(0.5, -0.0)  # centered below subplots
+)

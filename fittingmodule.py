@@ -26,10 +26,12 @@ Wo1 = 0.003
 def fitting(dataSetDict):
     freq = dataSetDict["f"]
     Z = dataSetDict["Z"]
+    scale = dataSetDict['scale']
+    Z = Z/scale
     R0 = float(min(np.real(Z)))
-    R1 = 1000
+    R1 = (float(max(np.real(Z))-R0))/2
     C1 = 1e-11
-    CPEC = 1e-3
+    CPEC = 1e-8*scale
     CPEx = 1
     tau = 15
 #    RandlesObj = Randles(CPE=False,initial_guess=[R0, R1, Wo1,C1])
@@ -41,7 +43,9 @@ def fitting(dataSetDict):
     UBC = [0,0,0.7,0]
     LBC = [np.inf,np.inf,1,np.inf]
     boundsc = (UBC,LBC)
-    mask = (freq <= 1e5)
-    fitobj = CustomCircObj.fit(freq[mask],Z[mask],boundsc)
+    mask = (freq <= 1e6)
+    for x in range(15):
+        fitobj = CustomCircObj.fit(freq[mask],Z[mask],boundsc)
+        CustomCircObj.initial_guess = list(fitobj.parameters_)
     return fitobj    
 #M, mu, Z_linKK, res_real, res_imag = linKK(freqs, Z, c=0.5, max_M=100, fit_type='complex', add_cap=True)
