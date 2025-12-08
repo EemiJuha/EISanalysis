@@ -38,11 +38,11 @@ def isEISfile(file):
     return answer
 fig, (ax_nyq, ax_zre, ax_zim, ax_phase) = make_panel()
 fig.tight_layout(rect=[0, 0.1, 1, 1])
-ax_nyq.set_title('Nyquist')
-ax_zre.set_title(r'Bode ($Z_{re}$)')
-ax_zim.set_title('Bode ($Z_{im}$)')
-ax_phase.set_title('Bode ($\phi$)')
-#log scale for the bode plots
+# ax_nyq.set_title('Nyquist')
+# ax_zre.set_title(r'Bode ($Z_{re}$)')
+# ax_zim.set_title('Bode ($Z_{im}$)')
+# ax_phase.set_title('Bode ($\phi$)')
+# #log scale for the bode plots
 ax_zre.set_xscale('log')
 ax_zim.set_xscale('log')
 ax_phase.set_xscale('log')
