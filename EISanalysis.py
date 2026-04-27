@@ -10,7 +10,7 @@ from impedance.validation import linKK
 import tkinter.filedialog
 import matplotlib.pyplot as plt
 import numpy as np
-
+import pandas as pd
 from impedance.models.circuits import CustomCircuit
 import tkinter.filedialog
 import tkinter as tk
@@ -57,11 +57,20 @@ root.destroy()
 testFile = fileNameList[0]
 
 freq, Z = preprocessing.readCHInstruments(testFile)
-mask = 7
-freq = freq[0:-mask]
-Z = Z[0:-mask]
+mask = 0
+if mask !=0:
+    freq = freq[0:-mask]
+    Z = Z[0:-mask]
 #making the linear KK analysis?
-M, mu, Z_linKK, res_real, res_imag = linKK(freq,Z,c=.5, max_M=100, fit_type='complex',add_cap=True)
+Mlist = []
+mulist = []
+ZKKlist = []
+res_reallist = []
+for file in fileNameList:
+    freq, Z = preprocessing.readCHInstruments(file)
+    M, mu, Z_linKK, res_real, res_imag = linKK(freq,Z,c=.5, max_M=100, fit_type='complex',add_cap=True)
+    Mlist.append(M)
+    mulist.append(mu)
 
 from impedance.visualization import plot_nyquist, plot_residuals
 from matplotlib.ticker import MaxNLocator
@@ -99,3 +108,12 @@ plot_residuals(ax3, freq, res_real, res_imag, y_limits=(-2,2))
 ax3.relim()
 ax3.margins(0.1)
 plt.show()
+
+
+df = pd.DataFrame({
+    'file': fileNameList,
+    'mu': mulist,
+    'M': Mlist,})
+
+mu_array = np.array(mu_list, dtype=float)
+np.savetxt('mu_values.csv', mu_array,delimiter=",",header="mu",comments="")
