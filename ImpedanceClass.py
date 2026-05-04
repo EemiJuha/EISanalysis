@@ -9,13 +9,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 from impedance.validation import linKK
 from impedance.models.circuits import Randles, CustomCircuit
+from matplotlib.ticker import EngFormatter, LogLocator
 
 DataFile = "droplet1-fteis400mV.txt"
 WrongDataFile = 'd1CV.txt'
-
-
-        
-    
 
 class ImpedanceData:
     def __init__(self, Freq, Zreal, Zimag, Area=None):
@@ -28,6 +25,9 @@ class ImpedanceData:
             self.Area = None
         self.fitobjRand = None
         self.fitobjCap = None
+        self.Zfit = None
+        self.FitParams = None
+        self.Validation = None
 
     def __len__(self):
         return len(self.Freq)
@@ -49,26 +49,56 @@ class ImpedanceData:
         
         return ImpedanceData(self.Freq[idx_min : idx_max + 1], self.Zreal[idx_min:idx_max+1],self.Zimag[idx_min:idx_max + 1])
     
-    def plot_nyquist(self, ax = None):
+    def plot_nyquist(self, ax = None,plotfits = True):
         if ax is None:
             fig, ax = plt.subplots()
             
+        
         ax.plot(self.Zreal/1e6,-self.Zimag/1e6, marker = 'o')
         ax.set_title('Nyquist-plot')
         ax.set_xlabel(r'$Z_{real}\ ($M$\Omega)$')
         ax.set_ylabel(r'-$Z_{imag}\ ($M$\Omega)$')            
     
-    def plot_bode(self, ax = None):
+        if plotfits and isinstance(self.Zfit, np.ndarray):
+            ax.plot(np.real(self.Zfit)/1e6,-np.imag(self.Zfit)/1e6)
+    def plot_bode(self, ax = None, plotfits = True):
         if ax is None:
-            fig, ax = plt.subplots(2,2)
+            fig, ax = plt.subplots(2,2, figsize=(9,6),constrained_layout=True)
             
-        ax[0,0].plot(self.Freq,self.Zreal)
-        ax[0,1].plot(self.Freq,self.Zimag)
-        ax[1,0].plot(self.Freq,self.phase)
-        ax[1,1].plot(self.Freq,self.magnitude)
+        ax[0,0].loglog(self.Freq,self.Zreal)
+        ax[0,1].loglog(self.Freq,-self.Zimag)
+        ax[1,0].semilogx(self.Freq,self.phase)
+        ax[1,1].loglog(self.Freq,self.magnitude)
+        ax[0,0].set_title(r'Bode, $Z^\prime$') 
+        ax[0,1].set_title(r'Bode, $-Z^{\prime \prime}$') 
+        ax[1,0].set_title(r'Bode, $\phi$') 
+        ax[1,1].set_title(r'Bode, $|Z|$') 
+#        ax[0,0].yscale()
+        for axi in ax:
+            for axj in axi:
+                axj.set_xlabel(r'$f$ (Hz)')
+                axj.grid(True,which="both")
+                axj.set_xscale('log')
+                if axj is not ax[1,0]:
+                    axj.yaxis.set_major_formatter(EngFormatter(r'$\Omega$'))
+                    axj.yaxis.set_minor_formatter(EngFormatter(r'$\Omega$'))
+                    axj.tick_params(axis='both',which='minor',labelsize=0)
         
-    def linKK_validation(self):
-        return self
+        #ax[0:,0:].set_xlabel(r'$f$ (Hz)')
+        #ax[0:,0:].set_ylabel(r'($\Omega$)')
+        ax[1,0].set_ylabel(r'$\phi$ ($^\circ$)')          
+        ax[1,0].set_yscale('linear')
+        if plotfits and isinstance(self.Zfit,np.ndarray):
+            ax[0,0].plot(self.Freq,np.real(self.Zfit))
+            ax[0,1].plot(self.Freq,-np.imag(self.Zfit))
+            ax[1,0].plot(self.Freq,np.angle(self.Zfit,deg=True))
+            ax[1,1].plot(self.Freq,np.abs(self.Zfit))
+            
+        
+        
+    def linKK_validation(self, fittype = 'complex'):
+        M, mu, Z_linKK, res_real, res_imag = linKK(self.Freq,self.impedance,c=.5, max_M=100, fit_type=fittype,add_cap=True)
+        self.Validation = [M, mu, Z_linKK, res_real, res_imag]
 
     def fit_to_Randles(self,InitGuess=[.01, .005, .001, 200, .1, .9], CPE=True):
         if not CPE:
@@ -79,6 +109,8 @@ class ImpedanceData:
         RandObj = Randles(initial_guess= InitGuess,CPE=CPE)
         RandObj.fit(self.Freq,ScaledImpedance)
         self.fitobjRand = RandObj
+        self.Zfit = RandObj.predict(self.Freq)*1000000
+        self.FitParams = RandObj.parameters_
         
         
     def fit_to_Capacitor(self,InitGuess=[.01, .1, .9],CPE=True):
@@ -91,6 +123,8 @@ class ImpedanceData:
         CapObj = CustomCircuit(initial_guess=[.1, .1, 0.9], circuit=circuit)
         CapObj.fit(self.Freq,ScaledImpedance)
         self.fitobjCap = CapObj
+        self.Zfit = CapObj.predict(self.Freq)*1000000
+        self.FitParams = CapObj.parameters_
         
     @property
     def Zdensity(self):
@@ -141,7 +175,8 @@ class ImpedanceData:
             
 dataObj = ImpedanceData.from_file(DataFile)
 dataObj.plot_bode()
-randob = Randles(initial_guess=[.01, .005, .001, 200, .1, .9], CPE=True)
-randob.fit(dataObj.Freq/100000,dataObj.impedance/100000)
-dataObj.fit_to_Capacitor()
 
+dataObj.fit_to_Capacitor()
+fitobj = dataObj.fitobjCap
+dataObj.plot_bode()
+dataObj.plot_nyquist()
