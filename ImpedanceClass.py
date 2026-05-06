@@ -209,6 +209,12 @@ class ImpedanceData:
         if not FilePath.lower().endswith(".txt"):
             raise ValueError("The file is not a .txt file")
 
+        FileName = None
+        InitE = None
+        MaxF = None
+        MinF = None
+        mode = None
+        
         with open(FilePath,encoding='utf-8') as file:
             my_data = file.readlines()
             for line in my_data:
@@ -216,9 +222,11 @@ class ImpedanceData:
                     isEIS = True
                     continue
                 elif "File:" in line:
-                    FileName = line[6:-2]
-                elif "Init E (V):" in line:
-                    InitE = line[12:-2]
+                    FileName = line[6:-1]
+                elif "Init E (V) = " in line:
+                    InitE = line[12:-1]
+                elif "High Frequency" in line:
+                    MaxF = line[-5:-1]
                 else:
                     continue
         
@@ -233,6 +241,7 @@ class ImpedanceData:
             dataObj = cls(np.asarray(dataDF.Freq,dtype=float),np.asarray(dataDF.Zreal, dtype=float),np.asarray(dataDF.Zimag,dtype=float),Area=Area)
             dataObj.metadata["FileName"] = FileName
             dataObj.metadata["InitE"] = InitE
+            dataObj.metadata["MaxF"] = MaxF
             return dataObj
         else:
             raise ValueError("The file is not an EIS data file")
