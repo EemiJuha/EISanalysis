@@ -10,24 +10,41 @@ import matplotlib.pyplot as plt
 from impedance.validation import linKK
 from impedance.models.circuits import Randles, CustomCircuit
 from matplotlib.ticker import EngFormatter, LogLocator
-
-DataFile = "droplet1-fteis400mV.txt"
-WrongDataFile = 'd1CV.txt'
+#import math 
+#DataFile = "droplet1-fteis400mV.txt"
+#WrongDataFile = 'd1CV.txt'
 
 class ImpedanceData:
     def __init__(self, Freq, Zreal, Zimag, Area=None):
+        if not isinstance(Freq, np.ndarray) and not isinstance(Zreal, np.ndarray) and not isinstance(Zimag, np.ndarray):
+            raise ValueError("Some of the data is not an array")
+        if not (len(Freq)==len(Zreal)==len(Zimag)):
+            raise ValueError("The arrays are not the same size")
         self.Freq = Freq
         self.Zreal = Zreal #Ohm
         self.Zimag = Zimag #Ohm
-        if Area:
-            self.Area = Area*(1e-4)**2 #cm2
-        else:
-            self.Area = None
+        # Notice the general syntax, good to know and intuititives
+        # ... = Value if condition else alternativevalue
+        # expected unit um^2 -> needs to be converted to cm^2
+        self.Area = Area*(1e-4)**2 if Area is not None else None
+        #if Area:
+        #    self.Area = Area*(1e-4)**2 #cm2
+        #else:
+        #    self.Area = None
         self.fitobjRand = None
         self.fitobjCap = None
         self.Zfit = None
         self.FitParams = None
         self.Validation = None
+        self.metadata = {
+            'FileName': None,
+            'InitE': None,
+            'MaxF': None,
+            'MinF': None,
+            'Mode': None,
+            'Amp': None,
+            'Qtime': None            
+             }
 
     def __len__(self):
         return len(self.Freq)
@@ -49,18 +66,57 @@ class ImpedanceData:
         
         return ImpedanceData(self.Freq[idx_min : idx_max + 1], self.Zreal[idx_min:idx_max+1],self.Zimag[idx_min:idx_max + 1])
     
+    
+    def plot_linKK(self, ax = None):
+        if not self.Validation:
+            raise ValueError('LinKK analysis has not been made')
+        if ax is None:
+            fig, ax = plt.subplots(2,1,figsize=(11,15),constrained_layout=True)
+        
+        ax[0].set_title('Nyquist')
+        self.plot_nyquist(ax[0],plotfits=False)
+        ax[0].plot(np.real(self.Validation[2])/1e6, -np.imag(self.Validation[2])/1e6)
+        ax[1].set_title('Residuals')
+        ax[1].plot(self.Freq,self.Validation[3])
+        ax[1].plot(self.Freq,self.Validation[4])
+        ax[1].set_xlabel(r'$f\ $(Hz)')
+        ax[1].set_ylabel(r'$\Delta\ $(%)')
+        #ax[0].set_aspect('equal')
+        ##set_position([left,bottom,width,height])
+        ax[0].set_position([0.3,0.3,0.4,0.4])
+        ax[1].set_position([0.1,0.1,0.8,0.15])
+            
+        
     def plot_nyquist(self, ax = None,plotfits = True):
         if ax is None:
             fig, ax = plt.subplots()
-            
+        Zreal = self.Zreal/1e6
+        Zimag = self.Zimag/1e6
         
-        ax.plot(self.Zreal/1e6,-self.Zimag/1e6, marker = 'o')
+        ax.plot(Zreal,-Zimag, marker = 'o')
         ax.set_title('Nyquist-plot')
         ax.set_xlabel(r'$Z_{real}\ ($M$\Omega)$')
         ax.set_ylabel(r'-$Z_{imag}\ ($M$\Omega)$')            
     
         if plotfits and isinstance(self.Zfit, np.ndarray):
             ax.plot(np.real(self.Zfit)/1e6,-np.imag(self.Zfit)/1e6)
+        
+        #setting up limits of the axes
+        #maxval = max(self.Zimag + self.Zreal)
+        x_min = 0
+        y_min = 0
+        x_max = Zreal.max()
+        y_max = Zimag.max()
+        if x_max > y_max:
+            y_max = x_max
+            
+        else:
+            x_max = y_max
+            
+        pad = 0.05*x_max
+        ax.set_xlim(x_min,x_max+pad)
+        ax.set_ylim(y_min,y_max+pad)
+        
     def plot_bode(self, ax = None, plotfits = True):
         if ax is None:
             fig, ax = plt.subplots(2,2, figsize=(9,6),constrained_layout=True)
@@ -100,6 +156,7 @@ class ImpedanceData:
         M, mu, Z_linKK, res_real, res_imag = linKK(self.Freq,self.impedance,c=.5, max_M=100, fit_type=fittype,add_cap=True)
         self.Validation = [M, mu, Z_linKK, res_real, res_imag]
 
+    #Fitting methods to Randles and a capacitor
     def fit_to_Randles(self,InitGuess=[.01, .005, .001, 200, .1, .9], CPE=True):
         if not CPE:
             InitGuess.pop(5)
@@ -157,7 +214,11 @@ class ImpedanceData:
             for line in my_data:
                 if line == 'A.C. Impedance\n':
                     isEIS = True
-                    break
+                    continue
+                elif "File:" in line:
+                    FileName = line[6:-2]
+                elif "Init E (V):" in line:
+                    InitE = line[12:-2]
                 else:
                     continue
         
@@ -169,14 +230,28 @@ class ImpedanceData:
             #the first index of the data is at rangeind.stop
             dataDF = dataDF.loc[Index[0]+1 : , : ].reset_index(drop=True)
             dataDF = dataDF.apply(pd.to_numeric,errors='coerce').dropna()
-            return cls(dataDF.Freq,dataDF.Zreal,dataDF.Zimag,Area=Area)
+            dataObj = cls(np.asarray(dataDF.Freq,dtype=float),np.asarray(dataDF.Zreal, dtype=float),np.asarray(dataDF.Zimag,dtype=float),Area=Area)
+            dataObj.metadata["FileName"] = FileName
+            dataObj.metadata["InitE"] = InitE
+            return dataObj
         else:
             raise ValueError("The file is not an EIS data file")
             
-dataObj = ImpedanceData.from_file(DataFile)
-dataObj.plot_bode()
+            # self.metadata = {
+            #     'FileName': None,
+            #     'InitE': None,
+            #     'MaxF': None,
+            #     'MinF': None,
+            #     'Mode': None,
+            #     'Amp': None,
+            #     'Qtime': None            
+            #      }
+# dataObj = ImpedanceData.from_file(DataFile)
+# #dataObj.plot_bode()
 
-dataObj.fit_to_Capacitor()
-fitobj = dataObj.fitobjCap
-dataObj.plot_bode()
-dataObj.plot_nyquist()
+# dataObj.fit_to_Capacitor()
+# #fitobj = dataObj.fitobjCap
+# #dataObj.plot_bode()
+# dataObj.plot_nyquist()
+# dataObj.linKK_validation()
+# dataObj.plot_linKK()
