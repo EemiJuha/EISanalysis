@@ -214,6 +214,8 @@ class ImpedanceData:
         MaxF = None
         MinF = None
         mode = None
+        Amp = None
+        Qtime = None
         
         with open(FilePath,encoding='utf-8') as file:
             my_data = file.readlines()
@@ -222,11 +224,18 @@ class ImpedanceData:
                     isEIS = True
                     continue
                 elif "File:" in line:
-                    FileName = line[6:-1]
+                    FileName = line[line.find(":")+2:-1]
                 elif "Init E (V) = " in line:
-                    InitE = line[12:-1]
+                    InitE = float(line[line.find("=")+2:-1])
                 elif "High Frequency" in line:
-                    MaxF = line[-5:-1]
+                    MaxF = float(line[line.find("=")+2:-1])
+                # elif "Low Frequency" in line:
+                    MinF = float(line[line.find("=")+2:-1])
+                elif "Amplitude (V) =" in line:
+                    Amp = float(line[line.find("=")+2:-1])
+                elif "Quiet Time" in line:
+                    Qtime = float(line[line.find("=")+2:-1])
+                
                 else:
                     continue
         
@@ -242,6 +251,10 @@ class ImpedanceData:
             dataObj.metadata["FileName"] = FileName
             dataObj.metadata["InitE"] = InitE
             dataObj.metadata["MaxF"] = MaxF
+            dataObj.metadata['MinF'] = MinF
+            dataObj.metadata['Mode'] = mode
+            dataObj.metadata['Amp'] = Amp
+            dataObj.metadata['Qtime'] = Qtime
             return dataObj
         else:
             raise ValueError("The file is not an EIS data file")
