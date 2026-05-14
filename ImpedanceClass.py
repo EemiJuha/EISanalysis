@@ -15,7 +15,7 @@ from matplotlib.ticker import EngFormatter, LogLocator
 #WrongDataFile = 'd1CV.txt'
 
 class ImpedanceData:
-    def __init__(self, Freq, Zreal, Zimag, Area=None):
+    def __init__(self, Freq, Zreal, Zimag, Validation=None, Area=None):
         if not isinstance(Freq, np.ndarray) and not isinstance(Zreal, np.ndarray) and not isinstance(Zimag, np.ndarray):
             raise ValueError("Some of the data is not an array")
         if not (len(Freq)==len(Zreal)==len(Zimag)):
@@ -35,7 +35,7 @@ class ImpedanceData:
         self.fitobjCap = None
         self.Zfit = None
         self.FitParams = None
-        self.Validation = None
+        self.Validation = Validation
         self.metadata = {
             'FileName': None,
             'InitE': None,
@@ -64,8 +64,13 @@ class ImpedanceData:
         if idx_min > idx_max:
             idx_max, idx_min = idx_min, idx_max
         
-        return ImpedanceData(self.Freq[idx_min : idx_max + 1], self.Zreal[idx_min:idx_max+1],self.Zimag[idx_min:idx_max + 1])
+        return ImpedanceData(self.Freq[idx_min : idx_max + 1], self.Zreal[idx_min:idx_max+1],self.Zimag[idx_min:idx_max + 1],self.Validation)
     
+    def select_frequency_range_by_ind(self, minind, maxind):
+        if minind > maxind:
+            minind, maxind = maxind, minind
+            
+        return ImpedanceData((self.Freq[minind:maxind]), self.Zreal[minind:maxind], self.Zimag[minind:maxind])
     
     def plot_linKK(self, ax = None):
         if not self.Validation:
@@ -85,6 +90,8 @@ class ImpedanceData:
         ##set_position([left,bottom,width,height])
         ax[0].set_position([0.3,0.3,0.4,0.4])
         ax[1].set_position([0.1,0.1,0.8,0.15])
+        ax[1].set_ylim(-2,2)
+        return ax
             
         
     def plot_nyquist(self, ax = None,plotfits = True):
@@ -116,6 +123,8 @@ class ImpedanceData:
         pad = 0.05*x_max
         ax.set_xlim(x_min,x_max+pad)
         ax.set_ylim(y_min,y_max+pad)
+        
+        return ax
         
     def plot_bode(self, ax = None, plotfits = True):
         if ax is None:
@@ -150,7 +159,7 @@ class ImpedanceData:
             ax[1,0].plot(self.Freq,np.angle(self.Zfit,deg=True))
             ax[1,1].plot(self.Freq,np.abs(self.Zfit))
             
-        
+        return ax
         
     def linKK_validation(self, fittype = 'complex'):
         M, mu, Z_linKK, res_real, res_imag = linKK(self.Freq,self.impedance,c=.5, max_M=100, fit_type=fittype,add_cap=True)
@@ -162,11 +171,18 @@ class ImpedanceData:
             InitGuess.pop(5)
         InitGuess[0] = min(self.Zreal)
         #Scaling should be considered
-        ScaledImpedance = self.impedance/1000000
+        Scale = 1e6
+        ScaledImpedance = self.impedance/Scale
         RandObj = Randles(initial_guess= InitGuess,CPE=CPE)
         RandObj.fit(self.Freq,ScaledImpedance)
         self.fitobjRand = RandObj
-        self.Zfit = RandObj.predict(self.Freq)*1000000
+        self.Zfit = RandObj.predict(self.Freq)*Scale
+        fitparams = RandObj.parameters_
+        fitparams[0] = fitparams[0]*Scale
+        fitparams[1] = fitparams[1]*Scale
+        fitparams[2] = fitparams[2]*Scale
+        fitparams[4] = fitparams[4]/Scale
+        
         self.FitParams = RandObj.parameters_
         
         
@@ -176,12 +192,16 @@ class ImpedanceData:
             circuit = 'R_0-C_1'
         else:
             circuit = 'R_0-CPE_1'
-        ScaledImpedance = self.impedance/1000000
+        Scale = 1e6
+        ScaledImpedance = self.impedance/Scale
         CapObj = CustomCircuit(initial_guess=[.1, .1, 0.9], circuit=circuit)
         CapObj.fit(self.Freq,ScaledImpedance)
-        self.fitobjCap = CapObj
-        self.Zfit = CapObj.predict(self.Freq)*1000000
-        self.FitParams = CapObj.parameters_
+        self.fitobjCap = CapObj #this will not be needed probably
+        self.Zfit = CapObj.predict(self.Freq)*Scale
+        fitparams = CapObj.parameters_
+        fitparams[0] = fitparams[0]*Scale
+        fitparams[1] = fitparams[1]/Scale
+        self.FitParams = CapObj.fitparams
         
     @property
     def Zdensity(self):
