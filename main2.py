@@ -50,9 +50,14 @@ for item in objList:
 # fig.suptitle(legends[0])
 
 #Fitting
-trimmedobj = objList[0].select_frequency_range_by_ind(8, len(objList[0]))
-#ax = objList[0].plot_nyquist()
-trimmedobj.plot_nyquist()
-#ax = objList[0].plot_nyquist(ax)
-trimmedobj.fit_to_Capacitor()
-ax = trimmedobj.plot_nyquist()
+ax = None
+for item in objList:
+    trimmedobj = item.select_frequency_range_by_ind(8, len(objList[0])-1)
+    trimmedobj.fit_to_Capacitor()
+    if ax == None:
+        ax = trimmedobj.plot_nyquist()
+    else:
+        ax = trimmedobj.plot_nyquist(ax=ax)
+    #ax = objList[0].plot_nyquist(ax)
+
+ax.set_xlim(0.125,0.240)

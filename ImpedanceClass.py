@@ -100,7 +100,7 @@ class ImpedanceData:
         Zreal = self.Zreal/1e6
         Zimag = self.Zimag/1e6
         
-        ax.plot(Zreal,-Zimag, marker = 'o')
+        ax.scatter(Zreal,-Zimag, marker = 'o')
         ax.set_title('Nyquist-plot')
         ax.set_xlabel(r'$Z_{real}\ ($M$\Omega)$')
         ax.set_ylabel(r'-$Z_{imag}\ ($M$\Omega)$')            
@@ -130,7 +130,7 @@ class ImpedanceData:
         if ax is None:
             fig, ax = plt.subplots(2,2, figsize=(9,6),constrained_layout=True)
             
-        ax[0,0].loglog(self.Freq,self.Zreal)
+        ax[0,0].loglog(self.Freq,self.Zreal,linestyle='',marker='o')
         ax[0,1].loglog(self.Freq,-self.Zimag)
         ax[1,0].semilogx(self.Freq,self.phase)
         ax[1,1].loglog(self.Freq,self.magnitude)
@@ -186,22 +186,36 @@ class ImpedanceData:
         self.FitParams = RandObj.parameters_
         
         
-    def fit_to_Capacitor(self,InitGuess=[.01, .1, .9],CPE=True):
+    def fit_to_Capacitor(self,InitGuess=[.1, .0001, .9],CPE=True):
         if not CPE:
             InitGuess.pop(2)
             circuit = 'R_0-C_1'
         else:
             circuit = 'R_0-CPE_1'
         Scale = 1e6
+        lower = [1e-12, 1e-12, 0.5]
+        upper = [1e9,   1e3,   1]
         ScaledImpedance = self.impedance/Scale
         CapObj = CustomCircuit(initial_guess=[.1, .1, 0.9], circuit=circuit)
-        CapObj.fit(self.Freq,ScaledImpedance)
+        CapObj.fit(self.Freq,ScaledImpedance,global_opt = True, bounds=(lower,upper))
+        
+        # n=0
+        # while n < 10:
+        #     newinit = CapObj.parameters_
+        #     CapObj = CustomCircuit(initial_guess=newinit, circuit = circuit)
+        #     CapObj.fit(self.Freq,ScaledImpedance,global_opt = True)
+        #     n += 1
+            
+            
         self.fitobjCap = CapObj #this will not be needed probably
+        
+        
+        
         self.Zfit = CapObj.predict(self.Freq)*Scale
         fitparams = CapObj.parameters_
         fitparams[0] = fitparams[0]*Scale
         fitparams[1] = fitparams[1]/Scale
-        self.FitParams = CapObj.fitparams
+        self.FitParams = fitparams
         
     @property
     def Zdensity(self):
