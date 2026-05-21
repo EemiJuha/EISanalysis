@@ -14,6 +14,38 @@ from matplotlib.ticker import EngFormatter, LogLocator
 #DataFile = "droplet1-fteis400mV.txt"
 #WrongDataFile = 'd1CV.txt'
 
+class ElementHandler:
+    def __init__(self,ImpDataList):
+        self.ImpDataList = ImpDataList
+        self.parameterlist = []
+        self.x =[]
+        self.xlabel = None
+
+        
+    def appendtolist(self,NewList):
+        self.ImpDataList.append(NewList)
+    
+    def collectparameters(self):
+        for item in self.ImpDataList:
+            parameterlist = item.FitParams
+            self.parameterlist.append(parameterlist)
+            
+    def createX(self,variable="E"):
+        
+        Xvar = []
+        self.xlabel = variable
+        match variable:
+            case "E":
+                for item in self.ImpDataList:
+                    metadata = item.metadata
+                    Xvar.append(metadata['InitE'])
+            case "Amp":
+                for item in self.ImpDataList:
+                    metadata = item.metadata
+                    Xvar.append(metadata['Amp'])
+            
+#    def plotelements(self)
+
 class ImpedanceData:
     def __init__(self, Freq, Zreal, Zimag, Validation=None, Area=None):
         if not isinstance(Freq, np.ndarray) and not isinstance(Zreal, np.ndarray) and not isinstance(Zimag, np.ndarray):
@@ -45,6 +77,7 @@ class ImpedanceData:
             'Amp': None,
             'Qtime': None            
              }
+        self.plotcolor = None
 
     def __len__(self):
         return len(self.Freq)
@@ -100,7 +133,11 @@ class ImpedanceData:
         Zreal = self.Zreal/1e6
         Zimag = self.Zimag/1e6
         
-        ax.scatter(Zreal,-Zimag, marker = 'o')
+        if self.plotcolor is None:
+            pl = ax.scatter(Zreal,-Zimag, marker = 'o')
+            self.plotcolor = pl.get_facecolor()
+        else:
+            ax.scatter(Zreal,-Zimag, marker = 'o', color=self.plotcolor)
         ax.set_title('Nyquist-plot')
         ax.set_xlabel(r'$Z_{real}\ ($M$\Omega)$')
         ax.set_ylabel(r'-$Z_{imag}\ ($M$\Omega)$')            
@@ -129,11 +166,13 @@ class ImpedanceData:
     def plot_bode(self, ax = None, plotfits = True):
         if ax is None:
             fig, ax = plt.subplots(2,2, figsize=(9,6),constrained_layout=True)
-            
-        ax[0,0].loglog(self.Freq,self.Zreal,linestyle='',marker='o')
-        ax[0,1].loglog(self.Freq,-self.Zimag)
-        ax[1,0].semilogx(self.Freq,self.phase)
-        ax[1,1].loglog(self.Freq,self.magnitude)
+        if self.plotcolor is None:
+            pl = ax[0,0].loglog(self.Freq,self.Zreal,linestyle='',marker='o')
+        else:
+            pl = ax[0,0].loglog(self.Freq,self.Zreal,linestyle='',marker='o',color=self.plotcolor)
+        ax[0,1].loglog(self.Freq,-self.Zimag,linestyle='',marker='o',color=pl[0].get_color())
+        ax[1,0].semilogx(self.Freq,self.phase,linestyle='',marker='o',color=pl[0].get_color())
+        ax[1,1].loglog(self.Freq,self.magnitude,linestyle='',marker='o',color=pl[0].get_color())
         ax[0,0].set_title(r'Bode, $Z^\prime$') 
         ax[0,1].set_title(r'Bode, $-Z^{\prime \prime}$') 
         ax[1,0].set_title(r'Bode, $\phi$') 
@@ -154,10 +193,10 @@ class ImpedanceData:
         ax[1,0].set_ylabel(r'$\phi$ ($^\circ$)')          
         ax[1,0].set_yscale('linear')
         if plotfits and isinstance(self.Zfit,np.ndarray):
-            ax[0,0].plot(self.Freq,np.real(self.Zfit))
-            ax[0,1].plot(self.Freq,-np.imag(self.Zfit))
-            ax[1,0].plot(self.Freq,np.angle(self.Zfit,deg=True))
-            ax[1,1].plot(self.Freq,np.abs(self.Zfit))
+            ax[0,0].plot(self.Freq,np.real(self.Zfit),color=pl[0].get_color())
+            ax[0,1].plot(self.Freq,-np.imag(self.Zfit),color=pl[0].get_color())
+            ax[1,0].plot(self.Freq,np.angle(self.Zfit,deg=True),color=pl[0].get_color())
+            ax[1,1].plot(self.Freq,np.abs(self.Zfit),color=pl[0].get_color())
             
         return ax
         
@@ -197,7 +236,7 @@ class ImpedanceData:
         upper = [1e9,   1e3,   1]
         ScaledImpedance = self.impedance/Scale
         CapObj = CustomCircuit(initial_guess=[.1, .1, 0.9], circuit=circuit)
-        CapObj.fit(self.Freq,ScaledImpedance,global_opt = True, bounds=(lower,upper))
+        CapObj.fit(self.Freq,ScaledImpedance,global_opt = False, bounds=(lower,upper))
         
         # n=0
         # while n < 10:
@@ -292,22 +331,3 @@ class ImpedanceData:
             return dataObj
         else:
             raise ValueError("The file is not an EIS data file")
-            
-            # self.metadata = {
-            #     'FileName': None,
-            #     'InitE': None,
-            #     'MaxF': None,
-            #     'MinF': None,
-            #     'Mode': None,
-            #     'Amp': None,
-            #     'Qtime': None            
-            #      }
-# dataObj = ImpedanceData.from_file(DataFile)
-# #dataObj.plot_bode()
-
-# dataObj.fit_to_Capacitor()
-# #fitobj = dataObj.fitobjCap
-# #dataObj.plot_bode()
-# dataObj.plot_nyquist()
-# dataObj.linKK_validation()
-# dataObj.plot_linKK()

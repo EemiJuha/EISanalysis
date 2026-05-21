@@ -6,7 +6,7 @@ New main file... again
 """
 
 
-from ImpedanceClass import ImpedanceData
+from ImpedanceClass import ImpedanceData, ElementHandler
 import tkinter.filedialog
 import tkinter as tk
 import matplotlib.pyplot as plt
@@ -51,13 +51,23 @@ for item in objList:
 
 #Fitting
 ax = None
+bodeexists = False
 for item in objList:
-    trimmedobj = item.select_frequency_range_by_ind(8, len(objList[0])-1)
+    trimmedobj = item.select_frequency_range_by_ind(10, len(objList[0])-1)
     trimmedobj.fit_to_Capacitor()
     if ax == None:
         ax = trimmedobj.plot_nyquist()
     else:
         ax = trimmedobj.plot_nyquist(ax=ax)
+    
+    if bodeexists == False:
+        bodeexists = True
+        axbode = trimmedobj.plot_bode()
+    else:
+        axbode = trimmedobj.plot_bode(ax=axbode)
     #ax = objList[0].plot_nyquist(ax)
+    item.FitParams = trimmedobj.FitParams
 
+EHobject = ElementHandler(objList)
+EHobject.collectparameters()
 ax.set_xlim(0.125,0.240)
