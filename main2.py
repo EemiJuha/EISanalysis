@@ -12,8 +12,12 @@ import tkinter as tk
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 import numpy as np
+import getroot
+from pathlib import Path
 
-start_folder = r'C:\Users\nieminen\Desktop\Datat verkkolevyltä\SMS-horiba2026'
+
+#start_folder = r'C:\Users\nieminen\Desktop\Datat verkkolevyltä\SMS-horiba2026'
+start_folder = getroot.get_data_root()
 root = tk.Tk()
 root.withdraw()
 root.attributes('-topmost',True)
@@ -35,10 +39,10 @@ for file in fileNameList:
 
 muvals = []
 Mvals = []
-for item in objList:
-    item.linKK_validation()
-    muvals.append(item.Validation[1])
-    Mvals.append(item.Validation[0])
+#for item in objList:
+#    item.linKK_validation()
+#    muvals.append(item.Validation[1])
+#    Mvals.append(item.Validation[0])
     
 
 # ax  = objList[0].plot_linKK()

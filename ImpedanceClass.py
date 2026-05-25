@@ -20,15 +20,35 @@ class ElementHandler:
         self.parameterlist = []
         self.x =[]
         self.xlabel = None
+        self.parameterdict = None
 
         
     def appendtolist(self,NewList):
         self.ImpDataList.append(NewList)
     
     def collectparameters(self):
+        nrelem = len(self.ImpDataList[0].FitParams)
+        elemlist = list(range(1,nrelem+1))
+        eldict = {}
+        elitems = []
+        for x in elemlist:
+            item = "El"+str(x)
+            elitems.append(item)
+            eldict.update({item: []})
+        i = 0
+        while i<len(elemlist):
+            elemlist[i]=elemlist[i]-1
+            i += 1
+            
+        for el,x in zip(elitems,elemlist):
+            for exp  in self.ImpDataList:
+                parameterlist = exp.FitParams
+                eldict[el].append(parameterlist[x])
         for item in self.ImpDataList:
             parameterlist = item.FitParams
             self.parameterlist.append(parameterlist)
+            
+        self.parameterdict = eldict
             
     def createX(self,variable="E"):
         
