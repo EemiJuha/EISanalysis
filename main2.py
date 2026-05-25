@@ -73,5 +73,6 @@ for item in objList:
     item.FitParams = trimmedobj.FitParams
 
 EHobject = ElementHandler(objList)
-EHobject.collectparameters()
+EHobject.createX(variable='Amp')
+EHobject.plotelems()
 ax.set_xlim(0.125,0.240)

@@ -21,7 +21,8 @@ class ElementHandler:
         self.x =[]
         self.xlabel = None
         self.parameterdict = None
-
+        self.parameterdf = pd.DataFrame()
+        self.collectparameters()
         
     def appendtolist(self,NewList):
         self.ImpDataList.append(NewList)
@@ -44,14 +45,20 @@ class ElementHandler:
             for exp  in self.ImpDataList:
                 parameterlist = exp.FitParams
                 eldict[el].append(parameterlist[x])
+                
+        for item in eldict:
+            eldict[item] = np.array(eldict[item])
         for item in self.ImpDataList:
             parameterlist = item.FitParams
             self.parameterlist.append(parameterlist)
             
         self.parameterdict = eldict
+        self.parameterdf = pd.DataFrame(eldict)
             
     def createX(self,variable="E"):
-        
+        '''
+        At the moment variable can be "E" or "Amp"
+        '''
         Xvar = []
         self.xlabel = variable
         match variable:
@@ -63,7 +70,34 @@ class ElementHandler:
                 for item in self.ImpDataList:
                     metadata = item.metadata
                     Xvar.append(metadata['Amp'])
+        self.parameterdict.update({variable: np.array(Xvar)})
+        self.parameterdf = pd.DataFrame(self.parameterdict)
+    
+    def plotelems(self):
+        #first, create a subplot that has as many axes as there are plottable elements
+        if self.xlabel is None:
+            raise ValueError("Cannot plot, X array is missing")
+        nrel  = len(self.parameterlist[0])
+        cols = nrel//2 + nrel%2
+        rows = 2
+        fig, ax = plt.subplots(rows,cols)
+        
+        rowlist = range(rows)
+        collist = range(cols)
+        axlist = []
+        for r in rowlist:
+            for c in collist:
+                axlist.append(ax[r,c])
+        axi = 0
+        for item in self.parameterdict:
+            if item == self.xlabel:
+                continue
             
+            self.parameterdf.plot(ax=axlist[axi],x=self.xlabel,y=item)
+            axi +=1
+
+            
+        
 #    def plotelements(self)
 
 class ImpedanceData:
