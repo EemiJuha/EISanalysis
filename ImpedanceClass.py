@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 from impedance.validation import linKK
 from impedance.models.circuits import Randles, CustomCircuit
 from matplotlib.ticker import EngFormatter, LogLocator
+import re
 #import math 
 #DataFile = "droplet1-fteis400mV.txt"
 #WrongDataFile = 'd1CV.txt'
@@ -73,7 +74,7 @@ class ElementHandler:
         self.parameterdict.update({variable: np.array(Xvar)})
         self.parameterdf = pd.DataFrame(self.parameterdict)
     
-    def plotelems(self):
+    def plotelems(self,densities=False):
         #first, create a subplot that has as many axes as there are plottable elements
         if self.xlabel is None:
             raise ValueError("Cannot plot, X array is missing")
@@ -81,21 +82,34 @@ class ElementHandler:
         cols = nrel//2 + nrel%2
         rows = 2
         fig, ax = plt.subplots(rows,cols)
-        
+        #Following code is just to make a 1D list of the axes in the subplot 
         rowlist = range(rows)
         collist = range(cols)
         axlist = []
         for r in rowlist:
             for c in collist:
                 axlist.append(ax[r,c])
+        
+        #creating the x label
+        xlab = self.xlabel
+        #if statement here just in case this will be expanded somehow in the future
+        if self.xlabel == "Amp":
+            xlab += " (V)"
+        elif self.label == "E":
+            xlab += " (V)"
+        
         axi = 0
         for item in self.parameterdict:
             if item == self.xlabel:
                 continue
-            
+            #make into densities /cm2
+            yvals = self.parameterdf[item]
             self.parameterdf.plot(ax=axlist[axi],x=self.xlabel,y=item)
+            axlist[axi].set_xlabel(xlab)
+            # How about the y-label?
+            
             axi +=1
-
+            
             
         
 #    def plotelements(self)
@@ -132,6 +146,7 @@ class ImpedanceData:
             'Qtime': None            
              }
         self.plotcolor = None
+        self.circuit = None
 
     def __len__(self):
         return len(self.Freq)
@@ -275,7 +290,7 @@ class ImpedanceData:
         fitparams[1] = fitparams[1]*Scale
         fitparams[2] = fitparams[2]*Scale
         fitparams[4] = fitparams[4]/Scale
-        
+        self.circuit = RandObj.circuit
         self.FitParams = RandObj.parameters_
         
         
@@ -288,8 +303,16 @@ class ImpedanceData:
         Scale = 1e6
         lower = [1e-12, 1e-12, 0.5]
         upper = [1e9,   1e3,   1]
+        initg = [.1, .1, 0.9]
+        if CPE == False:
+            lower.pop(2)
+            upper.pop(2)
+            initg.pop(2)
+            
+            
         ScaledImpedance = self.impedance/Scale
-        CapObj = CustomCircuit(initial_guess=[.1, .1, 0.9], circuit=circuit)
+        CapObj = CustomCircuit(initial_guess=initg, circuit=circuit)
+        self.circuit = CapObj.circuit
         CapObj.fit(self.Freq,ScaledImpedance,global_opt = False, bounds=(lower,upper))
         
         # n=0
@@ -309,6 +332,19 @@ class ImpedanceData:
         fitparams[0] = fitparams[0]*Scale
         fitparams[1] = fitparams[1]/Scale
         self.FitParams = fitparams
+        
+    def _sortcircuit(self, circuit):
+        # needs to be expanded if there will be other elements but R, C and CPE
+        Rpositions = [match.start() for match in re.finditer("R",circuit)]
+        Cpositions = [match.start() for match in re.finditer("C", circuit)]
+        CPEpositions = [match.start() for match in re.finditer("CPE", circuit)]
+        for CPEindex in CPEpositions:
+            Cpositions.pop(CPEindex)
+        RCCPE = np.array(Rpositions + Cpositions + CPEpositions)
+        ellit = np.array(["R"]*len(Rpositions) + ["C"]*len(Cpositions) + ["CPE"]*len(CPEpositions))
+        sortedind = np.argsort(RCCPE)
+        ellit = ellit[sortedind]
+        
         
     @property
     def Zdensity(self):
