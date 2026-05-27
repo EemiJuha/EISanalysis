@@ -147,6 +147,7 @@ class ImpedanceData:
              }
         self.plotcolor = None
         self.circuit = None
+        self.elemlist = None
 
     def __len__(self):
         return len(self.Freq)
@@ -292,6 +293,7 @@ class ImpedanceData:
         fitparams[4] = fitparams[4]/Scale
         self.circuit = RandObj.circuit
         self.FitParams = RandObj.parameters_
+        self._circuitlist(self.circuit)
         
         
     def fit_to_Capacitor(self,InitGuess=[.1, .0001, .9],CPE=True):
@@ -332,18 +334,26 @@ class ImpedanceData:
         fitparams[0] = fitparams[0]*Scale
         fitparams[1] = fitparams[1]/Scale
         self.FitParams = fitparams
+        self.ellist = self._circuitlist(self.circuit)
         
-    def _sortcircuit(self, circuit):
-        # needs to be expanded if there will be other elements but R, C and CPE
+        
+    def _circuitlist(self, circuit):
+        '''
+        method that takes the circuit string as an argument
+        and converts it into a list of strings corresponding to the circuit 
+        elements in order of appearance
+        needs to be expanded if there will be other elements but R, C and CPE
+        '''
         Rpositions = [match.start() for match in re.finditer("R",circuit)]
         Cpositions = [match.start() for match in re.finditer("C", circuit)]
         CPEpositions = [match.start() for match in re.finditer("CPE", circuit)]
         for CPEindex in CPEpositions:
-            Cpositions.pop(CPEindex)
+            Cpositions.remove(CPEindex)
         RCCPE = np.array(Rpositions + Cpositions + CPEpositions)
         ellit = np.array(["R"]*len(Rpositions) + ["C"]*len(Cpositions) + ["CPE"]*len(CPEpositions))
         sortedind = np.argsort(RCCPE)
         ellit = ellit[sortedind]
+        self.elemlist = ellit
         
         
     @property

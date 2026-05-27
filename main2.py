@@ -6,7 +6,7 @@ New main file... again
 """
 
 
-from ImpedanceClass import ImpedanceData, ElementHandler
+from EIStools import ImpedanceData, ElementHandler
 import tkinter.filedialog
 import tkinter as tk
 import matplotlib.pyplot as plt
