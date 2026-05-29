@@ -41,12 +41,15 @@ class ElementHandler:
         while i<len(elemlist):
             elemlist[i]=elemlist[i]-1
             i += 1
-            
+        eldict.update({"Areas": []}) 
         for el,x in zip(elitems,elemlist):
             for exp  in self.ImpDataList:
                 parameterlist = exp.FitParams
                 eldict[el].append(parameterlist[x])
-                
+        for exp in self.ImpDataList:
+            eldict["Areas"].append(exp.Area)
+                    
+        #converts eldict items into array        
         for item in eldict:
             eldict[item] = np.array(eldict[item])
         for item in self.ImpDataList:
@@ -58,6 +61,7 @@ class ElementHandler:
             
     def createX(self,variable="E"):
         '''
+        Creates the X array and updates it to the parameterdict and dataframe
         At the moment variable can be "E" or "Amp"
         '''
         Xvar = []
@@ -75,7 +79,8 @@ class ElementHandler:
         self.parameterdf = pd.DataFrame(self.parameterdict)
     
     def plotelems(self,densities=False):
-        #first, create a subplot that has as many axes as there are plottable elements
+        #
+        #create a subplot that has as many axes as there are plottable elements
         if self.xlabel is None:
             raise ValueError("Cannot plot, X array is missing")
         nrel  = len(self.parameterlist[0])
@@ -103,6 +108,7 @@ class ElementHandler:
             if item == self.xlabel:
                 continue
             #make into densities /cm2
+      
             yvals = self.parameterdf[item]
             self.parameterdf.plot(ax=axlist[axi],x=self.xlabel,y=item)
             axlist[axi].set_xlabel(xlab)
@@ -353,7 +359,15 @@ class ImpedanceData:
         ellit = np.array(["R"]*len(Rpositions) + ["C"]*len(Cpositions) + ["CPE"]*len(CPEpositions))
         sortedind = np.argsort(RCCPE)
         ellit = ellit[sortedind]
-        self.elemlist = ellit
+        listwithCPEx = []
+        xi = 0
+        for x in range(len(ellit)):
+            if ellit[x]=="CPE":
+                for i in ellit[xi:x+1]:
+                    listwithCPEx.append(str(i))
+                listwithCPEx.append("CPEx")
+                xi = x+1
+        self.elemlist = listwithCPEx
         
         
     @property
