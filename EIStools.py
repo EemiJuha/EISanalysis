@@ -22,7 +22,7 @@ class ElementHandler:
         self.x =[]
         self.xlabel = None
         self.parameterdict = None
-        self.parameterdf = pd.DataFrame()
+        self.parameterdf = None
         self.collectparameters()
         
     def appendtolist(self,NewList):
@@ -109,13 +109,13 @@ class ElementHandler:
                 continue
             #make into densities /cm2
       
-            yvals = self.parameterdf[item]
+            #yvals = self.parameterdf[item]
             self.parameterdf.plot(ax=axlist[axi],x=self.xlabel,y=item)
             axlist[axi].set_xlabel(xlab)
             # How about the y-label?
             
             axi +=1
-            
+        return axlist
             
         
 #    def plotelements(self)
