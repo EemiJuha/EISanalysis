@@ -100,12 +100,12 @@ class ElementHandler:
         #if statement here just in case this will be expanded somehow in the future
         if self.xlabel == "Amp":
             xlab += " (V)"
-        elif self.label == "E":
+        elif self.xlabel == "E":
             xlab += " (V)"
         
         axi = 0
         for item in self.parameterdict:
-            if item == self.xlabel:
+            if item == self.xlabel or item == "Areas":
                 continue
             #make into densities /cm2
       
@@ -116,7 +116,12 @@ class ElementHandler:
             
             axi +=1
         return axlist
+    
+    def ploterrors(self,ax=None):
+        if ax == None:
+            fig, ax = subplots()
             
+        
         
 #    def plotelements(self)
 
