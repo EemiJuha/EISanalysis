@@ -119,15 +119,18 @@ class ElementHandler:
     
     def ploterrors(self,ax=None):
         if ax == None:
-            fig, ax = subplots()
+            fig, ax = plt.subplots()
             
         
-        
+    #a method for plotting the linKK parameters
+    def plotLinKKParams(self):
+        return 0
 #    def plotelements(self)
 
 class ImpedanceData:
+    #The validation argument is for maintaining the validation data in certain methods
     def __init__(self, Freq, Zreal, Zimag, Validation=None, Area=None):
-        if not isinstance(Freq, np.ndarray) and not isinstance(Zreal, np.ndarray) and not isinstance(Zimag, np.ndarray):
+        if not isinstance(Freq, np.ndarray) or not isinstance(Zreal, np.ndarray) or not isinstance(Zimag, np.ndarray):
             raise ValueError("Some of the data is not an array")
         if not (len(Freq)==len(Zreal)==len(Zimag)):
             raise ValueError("The arrays are not the same size")
@@ -137,7 +140,7 @@ class ImpedanceData:
         # Notice the general syntax, good to know and intuititives
         # ... = Value if condition else alternativevalue
         # expected unit um^2 -> needs to be converted to cm^2
-        self.Area = Area*(1e-4)**2 if Area is not None else None
+        self.Area = Area*(1e-8) if Area is not None else None
         #if Area:
         #    self.Area = Area*(1e-4)**2 #cm2
         #else:
@@ -184,7 +187,7 @@ class ImpedanceData:
         if minind > maxind:
             minind, maxind = maxind, minind
             
-        return ImpedanceData((self.Freq[minind:maxind]), self.Zreal[minind:maxind], self.Zimag[minind:maxind])
+        return ImpedanceData((self.Freq[minind:maxind]), self.Zreal[minind:maxind], self.Zimag[minind:maxind],self.Validation)
     
     def plot_linKK(self, ax = None):
         if not self.Validation:

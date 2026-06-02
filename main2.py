@@ -71,6 +71,9 @@ for item in objList:
         axbode = trimmedobj.plot_bode(ax=axbode)
     #ax = objList[0].plot_nyquist(ax)
     item.FitParams = trimmedobj.FitParams
+    item.linKK_validation()
+    muvals.append(item.Validation[0])
+    Mvals.append(item.Validation[1])
 
 EHobject = ElementHandler(objList)
 EHobject.createX(variable='Amp')

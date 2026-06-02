@@ -12,19 +12,33 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 class CVtool:
-    def __init__(self, potential, current, Area = None):
+    def __init__(self, potential, current, Area = None, legend = None):
         self.metadata = None
         self.E = potential
         self.i = current
         self.Area = Area*1e-8 if Area is not None else None
+        self.legend = legend
         
-    def plotCV(self, ax = None):
+    def plotCV(self, ax = None, legendson = True):
         if ax == None:
             fig, ax = plt.subplots()
-        
         current = self.i/self.Area if self.Area is not None else self.i
-        current = current*1e9 if self.Area is None else current
-        ax.plot(self.E,current)
+        xlabel = r'E (V)'
+        if self.Area is None:
+            current = current*1e9
+            ylabel = r'I (nA)'
+        else:
+            ylabel = r'i (A/cm^2)'
+                
+        ax.set_xlabel(xlabel)
+        ax.set_ylabel(ylabel)
+        legend = None
+        if legendson == True:
+            legend = "N/A" if self.legend == None else self.legend
+        ax.plot(self.E,current, label = legend)
+        ax.legend()
+            
+        
         
         return ax
     
