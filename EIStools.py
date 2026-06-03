@@ -115,6 +115,7 @@ class ElementHandler:
             # How about the y-label?
             
             axi +=1
+        plt.show()
         return axlist
     
     def ploterrors(self,ax=None):

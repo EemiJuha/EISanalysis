@@ -9,6 +9,7 @@ Created on Mon Jun  1 13:58:45 2026
 from EIStools import ImpedanceData, ElementHandler
 import tkinter.filedialog
 import tkinter as tk
+from tkinter import ttk
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 import numpy as np
@@ -17,65 +18,140 @@ from pathlib import Path
 
 
 #start_folder = r'C:\Users\nieminen\Desktop\Datat verkkolevyltä\SMS-horiba2026'
-start_folder = getroot.get_data_root()
-root = tk.Tk()
-root.withdraw()
-root.attributes('-topmost',True)
-
-fileNameList = tkinter.filedialog.askopenfilenames(title='Select files for EIS analysis', initialdir=start_folder)
-root.destroy()
-objList = []
-legends = [] #amplitudes
-xvals = [] #amplitudes as floats
-for file in fileNameList:
-    try:
-       dataObj = ImpedanceData.from_file(file)
-       objList.append(dataObj)
-       amplitude = dataObj.metadata['Amp']
-       legends.append(str(amplitude)+" mV")
-       xvals.append(amplitude)
-    except:
-         continue
-#Validation part
-muvals = []
-Mvals = []
-#for item in objList:
-#    item.linKK_validation()
-#    muvals.append(item.Validation[1])
-#    Mvals.append(item.Validation[0])
+def Winprompt():
+    start_folder = getroot.get_data_root()
+    root = tk.Tk()
+    root.withdraw()
+    root.attributes('-topmost',True)
     
+    fileNameList = tkinter.filedialog.askopenfilenames(title='Select files for EIS analysis', initialdir=start_folder)
+    root.destroy()
+    return fileNameList
 
-# ax  = objList[0].plot_linKK()
-# Validationlist = objList[0].Validation
+def Winprompt2():
+    # First window
+    root = tk.Tk()
+    root.geometry("300x150")
+    root.columnconfigure(0, weight=1)
+    root.columnconfigure(1, weight=1)
+    root.title("Experiment Prompt")
+    root.rowconfigure(1, weight=1)
+    label = tk.Label(root,text="What is the x-variable in the data set?")
+    label.grid(
+    row=0,
+    column=0,
+    columnspan=4,
+    pady=20
+    )
+    xVar = None
+    def chooseE():
+        nonlocal xVar
+        xVar = "E"
+        root.destroy()
 
-# fig, ax = plt.subplots(2,1,figsize=(11,15),constrained_layout=True)
-# ax[0].plot(xvals,muvals)
-# ax[1].plot(xvals,Mvals)
-# fig.suptitle(legends[0])
+    def chooseAmp():
+        nonlocal xVar
+        xVar = "Amp"
+        root.destroy()
+    button1 = tk.Button(root, command=chooseE, text="Potential")
+    #button1.pack(padx=20, pady=10)
+    button1.grid(row=1, column=0)
+    button2 = tk.Button(root, command=chooseAmp, text="Amplitude")
+    #button2.pack(padx=20, pady=10)    #root = tk.Tk()
+    button2.grid(row=1,column=1)
+   
+    root.mainloop()
+    return xVar
+    # root.withdraw()
+    # root.attributes('-topmost', True)
+    #frm = ttk.Frame(root, padding=10)
+    #frm.grid()
+    #frm['width'] = '400p'
+    #ttk.Label(frm, text="Hello World!").grid(column=0, row=0)
+    #ttk.Button(frm, text="Quit", command=root.destroy).grid(column=1, row=0)
+#    xvar = tkinter.messagebox
+#    root.destroy()
 
-#Fitting
-ax = None
-bodeexists = False
-for item in objList:
-    trimmedobj = item.select_frequency_range_by_ind(10, len(objList[0])-1)
-    trimmedobj.fit_to_Capacitor()
-    if ax == None:
-        ax = trimmedobj.plot_nyquist()
-    else:
-        ax = trimmedobj.plot_nyquist(ax=ax)
-    
-    if bodeexists == False:
-        bodeexists = True
-        axbode = trimmedobj.plot_bode()
-    else:
-        axbode = trimmedobj.plot_bode(ax=axbode)
-    #ax = objList[0].plot_nyquist(ax)
-    item.FitParams = trimmedobj.FitParams
-    item.linKK_validation()
-    muvals.append(item.Validation[0])
-    Mvals.append(item.Validation[1])
+def isOK():
+    root = tk.Tk()
+    root.geometry("300x150")
+    root.columnconfigure(0, weight=1)
+    root.columnconfigure(1, weight=1)
+    root.title("Experiment Prompt")
+    root.rowconfigure(1, weight=1)
+    label = tk.Label(root,text="Is the x-variable correct")
+    label.grid(
+    row=0,
+    column=0,
+    columnspan=4,
+    pady=20
+    )
+    answer = None
+    def Yes():
+        nonlocal answer
+        answer = True
+        root.destroy()
 
-EHobject = ElementHandler(objList)
-EHobject.createX(variable='E')
-EHobject.plotelems()
-#ax.set_xlim(0.125,0.240)
+    def No():
+        nonlocal answer
+        answer = False
+        root.destroy()
+    button1 = tk.Button(root, command=Yes, text="Yes")
+    #button1.pack(padx=20, pady=10)
+    button1.grid(row=1, column=0)
+    button2 = tk.Button(root, command=No, text="No")
+    #button2.pack(padx=20, pady=10)    #root = tk.Tk()
+    button2.grid(row=1,column=1)
+   
+    root.mainloop()
+    return answer
+
+def main():
+    objList = []
+    legends = [] #amplitudes
+    xvals = [] #amplitudes as floats
+    fileNameList = Winprompt()
+    for file in fileNameList:
+        try:
+           dataObj = ImpedanceData.from_file(file)
+           objList.append(dataObj)
+           amplitude = dataObj.metadata['Amp']
+           legends.append(str(amplitude)+" mV")
+           xvals.append(amplitude)
+        except:
+             continue
+    #Validation part
+    muvals = []
+    Mvals = []
+    #Fitting
+    ax = None
+    bodeexists = False
+    for item in objList:
+        trimmedobj = item.select_frequency_range_by_ind(10, len(objList[0])-1)
+        trimmedobj.fit_to_Capacitor()
+        if ax == None:
+            ax = trimmedobj.plot_nyquist()
+        else:
+            ax = trimmedobj.plot_nyquist(ax=ax)
+        
+        if bodeexists == False:
+            bodeexists = True
+            axbode = trimmedobj.plot_bode()
+        else:
+            axbode = trimmedobj.plot_bode(ax=axbode)
+        #ax = objList[0].plot_nyquist(ax)
+        item.FitParams = trimmedobj.FitParams
+        item.linKK_validation()
+        muvals.append(item.Validation[0])
+        Mvals.append(item.Validation[1])
+    OK = False
+    while OK == False:
+        xVar = Winprompt2()
+        EHobject = ElementHandler(objList)
+        EHobject.createX(variable=xVar)
+        EHobject.plotelems()
+        OK = isOK()
+    #ax.set_xlim(0.125,0.240)
+    return EHobject
+
+xVar = main()
