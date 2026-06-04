@@ -38,4 +38,7 @@ for obj in objList:
     if axes == None:
         axes = obj.plotCV()
     else:
-        obj.plotCV(ax=axes)
+        obj.ax = axes
+        axes = obj.plotCV()        
+#objList[0].updateLegend("n/a", legon=False)
+

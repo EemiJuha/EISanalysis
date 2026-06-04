@@ -10,6 +10,8 @@ Tool for processing and plotting Cyclic Voltammetry data
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import tkinter as tk
+import tkinter.filedialog
 
 class CVtool:
     def __init__(self, potential, current, Area = None, legend = None):
@@ -18,10 +20,15 @@ class CVtool:
         self.i = current
         self.Area = Area*1e-8 if Area is not None else None
         self.legend = legend
+        self.fig = None
+        self.ax = None
+        self.filePath = None
         
-    def plotCV(self, ax = None, legendson = True):
-        if ax == None:
+    def plotCV(self, legend = None): # if legend is None, use self.legend, if self.legend is also None, legends off
+        if self.ax == None:
             fig, ax = plt.subplots()
+        else:
+            fig, ax = self.fig, self.ax
         current = self.i/self.Area if self.Area is not None else self.i
         xlabel = r'E (V)'
         if self.Area is None:
@@ -32,15 +39,38 @@ class CVtool:
                 
         ax.set_xlabel(xlabel)
         ax.set_ylabel(ylabel)
-        legend = None
-        if legendson == True:
-            legend = "N/A" if self.legend == None else self.legend
-        ax.plot(self.E,current, label = legend)
-        ax.legend()
-            
+        if legend is not None:
+            self.legend = legend
+        
+        ax.plot(self.E,current, label = self.legend)
+        if self.legend is not None:
+            ax.legend() 
+        self.ax = ax
+        self.fig = fig
         
         
         return ax
+    
+   #This needs to be fixed somehow so that it won't delete all the plots in the axes, maybe by toggling axis properties 
+    def updateLegend(self, legend, legon = True):
+        self.legend = legend
+        plt.cla()
+        self.plotCV(legendson = legon)
+        
+    def saveAs(self):
+        start_folder = self.filePath
+        root = tk.Tk()
+        root.withdraw()
+        root.attributes('-topmost',True)
+
+        saveFile = tkinter.filedialog.asksaveasfilename(title='Save as', initialdir=start_folder,    filetypes=[
+                ('png', '*.png'),
+                ('eps', '*.eps'),('svg','*.svg')
+            ],defaultextension = ".png")
+        root.destroy()
+        plt.savefig(saveFile)
+        
+        
     
     @classmethod
     def from_file(cls, filePath, Area = None):
@@ -116,6 +146,7 @@ class CVtool:
             metadata['SInterval'] = SInterval #Sampling interval
             metadata['Qtime'] = Qtime
             dataObj.metadata = metadata
+            dataObj.filePath = filePath
             return dataObj
         # FileName = None
         # InitE = None
