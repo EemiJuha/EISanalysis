@@ -11,6 +11,8 @@ from impedance.validation import linKK
 from impedance.models.circuits import Randles, CustomCircuit
 from matplotlib.ticker import EngFormatter, LogLocator
 import re
+import tkinter as tk
+import tkinter.filedialog
 #import math 
 #DataFile = "droplet1-fteis400mV.txt"
 #WrongDataFile = 'd1CV.txt'
@@ -163,6 +165,7 @@ class ImpedanceData:
         self.plotcolor = None
         self.circuit = None
         self.elemlist = None
+        self.filePath = None
 
     def __len__(self):
         return len(self.Freq)
@@ -378,7 +381,18 @@ class ImpedanceData:
                 xi = x+1
         self.elemlist = listwithCPEx
         
-        
+    def saveAs(self):
+        start_folder = self.filePath
+        root = tk.Tk()
+        root.withdraw()
+        root.attributes('-topmost',True)
+
+        saveFile = tkinter.filedialog.asksaveasfilename(title='Save as', initialdir=start_folder,    filetypes=[
+                ('png', '*.png'),
+                ('eps', '*.eps'),('svg','*.svg')
+            ],defaultextension = ".png")
+        root.destroy()
+        plt.savefig(saveFile)
     @property
     def Zdensity(self):
         if not self.Area:
@@ -451,6 +465,7 @@ class ImpedanceData:
             dataObj.metadata['Mode'] = mode
             dataObj.metadata['Amp'] = Amp
             dataObj.metadata['Qtime'] = Qtime
+            dataObj.filePath = FilePath
             return dataObj
         else:
             raise ValueError("The file is not an EIS data file")

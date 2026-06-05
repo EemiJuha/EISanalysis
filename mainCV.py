@@ -36,9 +36,10 @@ for file in fileNameList:
 axes = None
 for obj in objList:
     if axes == None:
-        axes = obj.plotCV()
+        fig, axes = obj.plotCV()
     else:
         obj.ax = axes
+        obj.fig = fig
         axes = obj.plotCV()        
 #objList[0].updateLegend("n/a", legon=False)
-
+objList[1].saveAs()

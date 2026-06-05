@@ -28,7 +28,8 @@ class CVtool:
         if self.ax == None:
             fig, ax = plt.subplots()
         else:
-            fig, ax = self.fig, self.ax
+            fig = self.fig
+            ax = self.ax
         current = self.i/self.Area if self.Area is not None else self.i
         xlabel = r'E (V)'
         if self.Area is None:
@@ -45,11 +46,12 @@ class CVtool:
         ax.plot(self.E,current, label = self.legend)
         if self.legend is not None:
             ax.legend() 
+        
         self.ax = ax
         self.fig = fig
         
         
-        return ax
+        return fig, ax
     
    #This needs to be fixed somehow so that it won't delete all the plots in the axes, maybe by toggling axis properties 
     def updateLegend(self, legend, legon = True):
