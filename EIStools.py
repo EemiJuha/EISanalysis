@@ -20,12 +20,14 @@ import tkinter.filedialog
 class ElementHandler:
     def __init__(self,ImpDataList):
         self.ImpDataList = ImpDataList
+        self.filePath = ImpDataList[0].filePath[0:ImpDataList[0].filePath.rfind('/')]
         self.parameterlist = []
         self.x =[]
         self.xlabel = None
         self.parameterdict = None
         self.parameterdf = None
         self.collectparameters()
+        self.plotFA = None
         
     def appendtolist(self,NewList):
         self.ImpDataList.append(NewList)
@@ -118,7 +120,8 @@ class ElementHandler:
             
             axi +=1
         plt.show()
-        return axlist
+        self.plotFA = (fig,axlist)
+        return fig, axlist
     
     def ploterrors(self,ax=None):
         if ax == None:
@@ -129,6 +132,19 @@ class ElementHandler:
     def plotLinKKParams(self):
         return 0
 #    def plotelements(self)
+
+    def saveAs(self):
+        start_folder = self.filePath
+        root = tk.Tk()
+        root.withdraw()
+        root.attributes('-topmost',True)
+        plt.figure(self.plotFA[0].number)
+        saveFile = tkinter.filedialog.asksaveasfilename(title='Save as', initialdir=start_folder,    filetypes=[
+                ('png', '*.png'),
+                ('eps', '*.eps'),('svg','*.svg')
+            ],defaultextension = ".png")
+        root.destroy()
+        plt.savefig(saveFile)
 
 class ImpedanceData:
     #The validation argument is for maintaining the validation data in certain methods
@@ -166,6 +182,11 @@ class ImpedanceData:
         self.circuit = None
         self.elemlist = None
         self.filePath = None
+        self.NyquistFA = None #will be defined as (fig, ax)
+        self.BodeFA = None #(fig,ax)
+        self.LinKKFA = None # (fig,ax)
+        
+        
 
     def __len__(self):
         return len(self.Freq)
@@ -198,6 +219,8 @@ class ImpedanceData:
             raise ValueError('LinKK analysis has not been made')
         if ax is None:
             fig, ax = plt.subplots(2,1,figsize=(11,15),constrained_layout=True)
+        else:
+            fig = self.LinKKFA[0]
         
         ax[0].set_title('Nyquist')
         self.plot_nyquist(ax[0],plotfits=False)
@@ -212,12 +235,16 @@ class ImpedanceData:
         ax[0].set_position([0.3,0.3,0.4,0.4])
         ax[1].set_position([0.1,0.1,0.8,0.15])
         ax[1].set_ylim(-2,2)
-        return ax
+        self.LinKKFA = (fig, ax)
+        return fig, ax
             
         
     def plot_nyquist(self, ax = None,plotfits = True):
         if ax is None:
             fig, ax = plt.subplots()
+        else:
+            fig = ax[0]
+            ax = ax[1]
         Zreal = self.Zreal/1e6
         Zimag = self.Zimag/1e6
         
@@ -248,12 +275,15 @@ class ImpedanceData:
         pad = 0.05*x_max
         ax.set_xlim(x_min,x_max+pad)
         ax.set_ylim(y_min,y_max+pad)
-        
-        return ax
+        self.NyquistFA = (fig, ax)
+        return fig, ax
         
     def plot_bode(self, ax = None, plotfits = True):
         if ax is None:
             fig, ax = plt.subplots(2,2, figsize=(9,6),constrained_layout=True)
+        else:
+            fig = ax[0]
+            ax = ax[1]
         if self.plotcolor is None:
             pl = ax[0,0].loglog(self.Freq,self.Zreal,linestyle='',marker='o')
         else:
@@ -285,8 +315,9 @@ class ImpedanceData:
             ax[0,1].plot(self.Freq,-np.imag(self.Zfit),color=pl[0].get_color())
             ax[1,0].plot(self.Freq,np.angle(self.Zfit,deg=True),color=pl[0].get_color())
             ax[1,1].plot(self.Freq,np.abs(self.Zfit),color=pl[0].get_color())
-            
-        return ax
+        
+        self.BodeFA = (fig, ax)
+        return fig, ax
         
     def linKK_validation(self, fittype = 'complex'):
         M, mu, Z_linKK, res_real, res_imag = linKK(self.Freq,self.impedance,c=.5, max_M=100, fit_type=fittype,add_cap=True)
@@ -381,7 +412,27 @@ class ImpedanceData:
                 xi = x+1
         self.elemlist = listwithCPEx
         
-    def saveAs(self):
+    def saveAs(self, figure = "Nyquist"):
+        '''
+        Parameters
+        ----------
+        figure : TYPE, string ("Nyquist", "Bode", "LinKK")
+            Tells which of the created figures to save. The default is "Nyquist".
+
+        Returns
+        -------
+        None.
+
+        '''
+        if figure == "Nyquist":
+            plt.figure(self.NyquistFA[0].number)
+        elif figure == "Bode":
+            plt.figure(self.BodeFA[0].number)
+        elif figure == "LinKK":
+            plt.figure(self.LinKKFA[0].number)
+        else:
+            raise ValueError("The argument should be Nyquist, Bode or LinKK")
+                    
         start_folder = self.filePath
         root = tk.Tk()
         root.withdraw()
@@ -393,6 +444,10 @@ class ImpedanceData:
             ],defaultextension = ".png")
         root.destroy()
         plt.savefig(saveFile)
+        
+    def updateArea(self, area):
+        self.Area = area*1e-8
+        
     @property
     def Zdensity(self):
         if not self.Area:

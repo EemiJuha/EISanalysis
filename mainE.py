@@ -9,12 +9,12 @@ Created on Mon Jun  1 13:58:45 2026
 from EIStools import ImpedanceData, ElementHandler
 import tkinter.filedialog
 import tkinter as tk
-from tkinter import ttk
-import matplotlib.pyplot as plt
-import matplotlib as mpl
-import numpy as np
+#from tkinter import ttk
+#import matplotlib.pyplot as plt
+#import matplotlib as mpl
+#import numpy as np
 import getroot
-from pathlib import Path
+#from pathlib import Path
 
 
 #start_folder = r'C:\Users\nieminen\Desktop\Datat verkkolevyltä\SMS-horiba2026'
@@ -106,10 +106,11 @@ def isOK():
     root.mainloop()
     return answer
 
-def main():
+def SelectAndParse():
     objList = []
     legends = [] #amplitudes
     xvals = [] #amplitudes as floats
+    #first file dialog window for selecting which files to read
     fileNameList = Winprompt()
     for file in fileNameList:
         try:
@@ -130,15 +131,15 @@ def main():
         trimmedobj = item.select_frequency_range_by_ind(10, len(objList[0])-1)
         trimmedobj.fit_to_Capacitor()
         if ax == None:
-            ax = trimmedobj.plot_nyquist()
+            fig, ax = trimmedobj.plot_nyquist()
         else:
-            ax = trimmedobj.plot_nyquist(ax=ax)
+            fig, ax = trimmedobj.plot_nyquist(ax=(fig,ax))
         
         if bodeexists == False:
             bodeexists = True
-            axbode = trimmedobj.plot_bode()
+            figbode, axbode = trimmedobj.plot_bode()
         else:
-            axbode = trimmedobj.plot_bode(ax=axbode)
+            figbode, axbode = trimmedobj.plot_bode(ax=(figbode,axbode))
         #ax = objList[0].plot_nyquist(ax)
         item.FitParams = trimmedobj.FitParams
         item.linKK_validation()
@@ -149,9 +150,10 @@ def main():
         xVar = Winprompt2()
         EHobject = ElementHandler(objList)
         EHobject.createX(variable=xVar)
-        EHobject.plotelems()
+        axelem = EHobject.plotelems()
         OK = isOK()
     #ax.set_xlim(0.125,0.240)
-    return EHobject
+    return objList, EHobject
 
-xVar = main()
+if __name__ == "__main__":
+    objList, EHobject = SelectAndParse()
