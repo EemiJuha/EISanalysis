@@ -128,6 +128,7 @@ def SelectAndParse():
     #Fitting
     ax = None
     bodeexists = False
+    trimmedobjlist = []
     for item in objList:
         trimmedobj = item.select_frequency_range_by_ind(10, len(objList[0])-1)
         trimmedobj.fit_to_Capacitor()
@@ -146,15 +147,25 @@ def SelectAndParse():
         item.linKK_validation()
         muvals.append(item.Validation[0])
         Mvals.append(item.Validation[1])
+        trimmedobj.filePath = item.filePath
+        trimmedobjlist.append(trimmedobj)
     OK = False
     while OK == False:
         xVar = Winprompt2()
-        EHobject = ElementHandler(objList)
+        if xVar == "E":
+            for obj in trimmedobjlist:
+                legend = str(obj.metadata['InitE'])+" V"
+                obj.legend = legend
+        elif xVar == "Amp":
+            for obj in trimmedobjlist:
+                legend = str(obj.metadata['Amp'])+" V"
+                obj.legend = legend
+        EHobject = ElementHandler(trimmedobjlist)
         EHobject.createX(variable=xVar)
         axelem = EHobject.plotelems()
         OK = isOK()
     #ax.set_xlim(0.125,0.240)
-    return objList, EHobject
+    return objList, trimmedobjlist
 
 if __name__ == "__main__":
     objList, EHobject = SelectAndParse()

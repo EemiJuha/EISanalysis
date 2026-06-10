@@ -29,7 +29,40 @@ class ElementHandler:
         self.collectparameters()
         self.plotFA = None
         
+    def verifyCircuitList(self):
+        '''
+        A method for verifying that all of the data files/objects have been fitted
+        to the same 
+
+        Returns
+        -------
+        True if all of the circuits are the same
+        False if not
+
+        '''
+        circuitlist = []
+        for impObj in self.ImpDataList:
+            circuitlist.append(impObj.ellist)
+        if all(item == circuitlist[0] for item in circuitlist):
+            self.ellist = circuitlist[0]
+        else:
+            raise ValueError("The circuits are not uniform for each ImpedanceData object")
+        
+
     def appendtolist(self,NewList):
+        '''
+        
+
+        Parameters
+        ----------
+        NewList : TYPE
+            DESCRIPTION.
+
+        Returns
+        -------
+        None.
+
+        '''
         self.ImpDataList.append(NewList)
     
     def collectparameters(self):
@@ -117,7 +150,7 @@ class ElementHandler:
             self.parameterdf.plot(ax=axlist[axi],x=self.xlabel,y=item)
             axlist[axi].set_xlabel(xlab)
             # How about the y-label?
-            
+
             axi +=1
         plt.show()
         self.plotFA = (fig,axlist)
@@ -148,7 +181,7 @@ class ElementHandler:
 
 class ImpedanceData:
     #The validation argument is for maintaining the validation data in certain methods
-    def __init__(self, Freq, Zreal, Zimag, Validation=None, Area=None):
+    def __init__(self, Freq, Zreal, Zimag, Validation=None, Area=None, legend=None):
         if not isinstance(Freq, np.ndarray) or not isinstance(Zreal, np.ndarray) or not isinstance(Zimag, np.ndarray):
             raise ValueError("Some of the data is not an array")
         if not (len(Freq)==len(Zreal)==len(Zimag)):
@@ -164,6 +197,7 @@ class ImpedanceData:
         #    self.Area = Area*(1e-4)**2 #cm2
         #else:
         #    self.Area = None
+        self.legend = legend
         self.fitobjRand = None
         self.fitobjCap = None
         self.Zfit = None
@@ -182,6 +216,7 @@ class ImpedanceData:
         self.circuit = None
         self.elemlist = None
         self.filePath = None
+        #figure and axes for Nyquist, Bode and LinKK, respectively (FA: Figure, Axes)
         self.NyquistFA = None #will be defined as (fig, ax)
         self.BodeFA = None #(fig,ax)
         self.LinKKFA = None # (fig,ax)
@@ -384,6 +419,8 @@ class ImpedanceData:
         fitparams[1] = fitparams[1]/Scale
         self.FitParams = fitparams
         self.ellist = self._circuitlist(self.circuit)
+        
+
         
         
     def _circuitlist(self, circuit):
