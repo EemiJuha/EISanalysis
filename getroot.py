@@ -7,6 +7,7 @@ Created on Fri May 22 11:49:53 2026
 """
 
 from pathlib import Path
+import os
 
 POSSIBLE_ROOTS = [
     Path(r'C:\Users\nieminen\Desktop\Datat verkkolevyltä\SMS-horiba2026'),
@@ -17,5 +18,7 @@ def get_data_root():
     for path in POSSIBLE_ROOTS:
         if path.exists():
             return path
+    
+    return os.getcwd()
 
-    raise FileNotFoundError("No valid EIS data root folder found")
+    
