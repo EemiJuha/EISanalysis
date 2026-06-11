@@ -42,4 +42,4 @@ for obj in objList:
         obj.fig = fig
         axes = obj.plotCV()        
 #objList[0].updateLegend("n/a", legon=False)
-objList[1].saveAs()
+objList[len(objList)-1].saveAs()
