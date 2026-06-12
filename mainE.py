@@ -14,6 +14,7 @@ import tkinter as tk
 #import matplotlib as mpl
 #import numpy as np
 import getroot
+from drsizecalculator import calculateArea
 #from pathlib import Path
 
 

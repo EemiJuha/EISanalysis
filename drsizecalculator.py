@@ -16,13 +16,17 @@ import pandas as pd
 import getroot
 #start_folder = r'C:\Users\nieminen\Desktop\Datat verkkolevyltä\SMS-horiba2026'
 
-def calculateArea():
-    start_folder = getroot.get_data_root()
-    root = tk.Tk()
-    root.withdraw()
-    root.attributes('-topmost',True)
+def calculateArea(startFolder = None):
+    if startFolder == None:
+        start_folder = getroot.get_data_root()
+        root = tk.Tk()
+        root.withdraw()
+        root.attributes('-topmost',True)
+    else:
+        start_folder = startFolder
+            
     
-    fileName = tkinter.filedialog.askopenfilename(title='Select files for CV analysis', initialdir=start_folder)
+    fileName = tkinter.filedialog.askopenfilename(title='Select the txt file containing the area measurements', initialdir=start_folder)
     
     with open(fileName, "r", encoding="utf-8") as file:
         #print(repr(file.readline()))

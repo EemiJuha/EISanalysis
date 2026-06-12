@@ -29,7 +29,12 @@ legends = [] #amplitudes
 xvals = [] #amplitudes as floats
 for file in fileNameList:
     try:
-       dataObj = CVtool.from_file(file)
+       if objList == []:
+           dataObj = CVtool.from_file(file)
+           dataObj.updateArea()
+       else:
+           dataObj = CVtool.from_file(file)
+           dataObj.Area = dataObj[0].Area
        objList.append(dataObj)
     except:
          continue

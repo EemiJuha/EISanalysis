@@ -12,7 +12,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import tkinter as tk
 import tkinter.filedialog
-
+from drsizecalculator import calculateArea
 class CVtool:
     def __init__(self, potential, current, Area = None, legend = None):
         self.metadata = None
@@ -23,6 +23,12 @@ class CVtool:
         self.fig = None
         self.ax = None
         self.filePath = None
+    
+        
+    def updateArea(self):
+        Area = calculateArea(startFolder=self.filePath)
+        Area = Area*1e-8
+        self.Area = Area
         
     def plotCV(self, legend = None): # if legend is None, use self.legend, if self.legend is also None, legends off
         if self.ax == None:
