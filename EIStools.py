@@ -32,7 +32,7 @@ class ElementHandler:
     def verifyCircuitList(self):
         '''
         A method for verifying that all of the data files/objects have been fitted
-        to the same 
+        to the same equivalent circuit
 
         Returns
         -------
@@ -51,8 +51,8 @@ class ElementHandler:
 
     def appendtolist(self,NewList):
         '''
+        this method should be expanded so that the new list items will get plotted to the pre-existing figures
         
-
         Parameters
         ----------
         NewList : TYPE
@@ -217,6 +217,7 @@ class ImpedanceData:
         self.elemlist = None
         self.filePath = None
         #figure and axes for Nyquist, Bode and LinKK, respectively (FA: Figure, Axes)
+        #would it make sense to save the line as well
         self.NyquistFA = None #will be defined as (fig, ax)
         self.BodeFA = None #(fig,ax)
         self.LinKKFA = None # (fig,ax)
@@ -274,26 +275,35 @@ class ImpedanceData:
         return fig, ax
             
         
-    def plot_nyquist(self, ax = None,plotfits = True):
+    def plot_nyquist(self, ax = None,plotfits = True,density = False):
         if ax is None:
             fig, ax = plt.subplots()
         else:
             fig = ax[0]
             ax = ax[1]
-        Zreal = self.Zreal/1e6
-        Zimag = self.Zimag/1e6
+        if density == False:
+            Zreal = self.Zreal/1e6
+            Zimag = self.Zimag/1e6
+            xlab = r'$Z_{real}\ ($M$\Omega)$'
+            ylab = r'-$Z_{imag}\ ($M$\Omega)$'
+        else:
+            Zreal = self.Zreal/self.Area
+            Zimag = self.Zimag/self.Area
+            xlab = r'$Z_{real}\ (\Omega/$cm$^2)$'
+            ylab = r'-$Z_{imag}\ (\Omega/$cm$^2)$'
+        
         
         if self.plotcolor is None:
             pl = ax.scatter(Zreal,-Zimag, marker = 'o')
             self.plotcolor = pl.get_facecolor()
         else:
-            ax.scatter(Zreal,-Zimag, marker = 'o', color=self.plotcolor)
+            pl = ax.scatter(Zreal,-Zimag, marker = 'o', color=self.plotcolor, label= self.legend)
         ax.set_title('Nyquist-plot')
-        ax.set_xlabel(r'$Z_{real}\ ($M$\Omega)$')
-        ax.set_ylabel(r'-$Z_{imag}\ ($M$\Omega)$')            
+        ax.set_xlabel(xlab)
+        ax.set_ylabel(ylab)            
     
         if plotfits and isinstance(self.Zfit, np.ndarray):
-            ax.plot(np.real(self.Zfit)/1e6,-np.imag(self.Zfit)/1e6)
+            fitline = ax.plot(np.real(self.Zfit)/1e6,-np.imag(self.Zfit)/1e6)
         
         #setting up limits of the axes
         #maxval = max(self.Zimag + self.Zreal)
@@ -310,7 +320,7 @@ class ImpedanceData:
         pad = 0.05*x_max
         ax.set_xlim(x_min,x_max+pad)
         ax.set_ylim(y_min,y_max+pad)
-        self.NyquistFA = (fig, ax)
+        self.NyquistFA = (fig, ax, pl, fitline)
         return fig, ax
         
     def plot_bode(self, ax = None, plotfits = True):

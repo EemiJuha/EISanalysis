@@ -22,6 +22,7 @@ class CVtool:
         self.legend = legend
         self.fig = None
         self.ax = None
+        self.line = None
         self.filePath = None
     
         
@@ -40,30 +41,29 @@ class CVtool:
         xlabel = r'E (V)'
         if self.Area is None:
             current = current*1e9
-            ylabel = r'I (nA)'
+            ylabel = r'I (\mathrm{nA})'
         else:
-            ylabel = r'i (A/cm^2)'
+            current = current*1e6
+            ylabel = r'$i\ (\mu\mathrm{A/cm}^2)$'
                 
         ax.set_xlabel(xlabel)
         ax.set_ylabel(ylabel)
         if legend is not None:
             self.legend = legend
         
-        ax.plot(self.E,current, label = self.legend)
-        if self.legend is not None:
-            ax.legend() 
+        #label should be by default the name of the data file 
+        label = self.metadata['FileName'] if self.legend is None else self.legend
+        
+        #self.line has been saved so that the label can be changed retroactively
+        self.line = ax.plot(self.E,current, label = label)
         
         self.ax = ax
         self.fig = fig
-        
-        
+                
         return fig, ax
     
-   #This needs to be fixed somehow so that it won't delete all the plots in the axes, maybe by toggling axis properties 
-    def updateLegend(self, legend, legon = True):
-        self.legend = legend
-        plt.cla()
-        self.plotCV(legendson = legon)
+    def legendsOn(self):
+        self.ax.legend()
         
     def saveAs(self):
         start_folder = self.filePath

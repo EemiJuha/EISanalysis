@@ -13,6 +13,7 @@ import matplotlib as mpl
 import numpy as np
 import getroot
 from pathlib import Path
+from drsizecalculator import calculateArea
 
 
 
@@ -34,7 +35,7 @@ for file in fileNameList:
            dataObj.updateArea()
        else:
            dataObj = CVtool.from_file(file)
-           dataObj.Area = dataObj[0].Area
+           dataObj.Area = objList[0].Area
        objList.append(dataObj)
     except:
          continue
@@ -45,6 +46,8 @@ for obj in objList:
     else:
         obj.ax = axes
         obj.fig = fig
-        axes = obj.plotCV()        
+        fig, axes = obj.plotCV()  
+        
+objList[len(objList)-1].ax.legend()
 #objList[0].updateLegend("n/a", legon=False)
-objList[len(objList)-1].saveAs()
+#objList[len(objList)-1].saveAs()

@@ -36,7 +36,7 @@ def calculateArea(startFolder = None):
     reference = 100/reference
     areas = pd.DataFrame(df["No. points"]*reference["ref"], columns=["area in um2"])
     newdf = df.join(areas)
-    meanarea = newdf["area in um2"].mean()
+    meanarea = newdf["area in um2"][2]
     return meanarea
 
 if __name__== "__main__":
