@@ -187,13 +187,16 @@ def NyquistTest():
     ax = None
     trimmedobjlist = []
     for item in objList:
-        trimmedobj = item.select_frequency_range_by_ind(10, len(objList[0])-1)
-        trimmedobj.fit_to_Capacitor()
+        trimmedobj = item.select_frequency_range_by_ind(10, len(objList[0])-2)
+        #trimmedobj.fit_to_Capacitor()
+        trimmedobj.fit_to_Randles_noW()
+        #trimmedobj.fit_to_Randles()
+        
         if ax == None:
             fig, ax = trimmedobj.plot_nyquist()
         else:
             fig, ax = trimmedobj.plot_nyquist(ax=(fig,ax))
-        
+        trimmedobjlist.append(trimmedobj)
     #ax.set_xlim(0.125,0.240)
     return objList, trimmedobjlist
 

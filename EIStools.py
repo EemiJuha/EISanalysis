@@ -200,6 +200,7 @@ class ImpedanceData:
         self.legend = legend
         self.fitobjRand = None
         self.fitobjCap = None
+        self.fitobjRandnoW = None
         self.Zfit = None
         self.FitParams = None
         self.Validation = Validation
@@ -367,17 +368,53 @@ class ImpedanceData:
     def linKK_validation(self, fittype = 'complex'):
         M, mu, Z_linKK, res_real, res_imag = linKK(self.Freq,self.impedance,c=.5, max_M=100, fit_type=fittype,add_cap=True)
         self.Validation = [M, mu, Z_linKK, res_real, res_imag]
+    
+    def fit_to_Randles_noW(self, InitGuess = [.01, .005, 1e-5, .9],CPE=True):
+        circuit = "R0-p(R1,CPE0)" 
+        if not CPE:
+            InitGuess.pop(3)
+            circuit = "R0-p(R1,C0)"
+        InitGuess[0] = min(self.Zreal)
+        Scale = 1e6
+        ScaledImpedance = self.impedance/Scale
+        lower = [0,0, 0, 0.6]
+        upper = [np.inf, np.inf,   1e-3,   1]
+        #initg = [.1, .1, 0.9]
+        if CPE == False:
+            lower.pop(2)
+            upper.pop(2)
+        boundaries = (lower,upper)
+        
+        RandObj = CustomCircuit(initial_guess = InitGuess,circuit=circuit)
+        RandObj.fit(self.Freq,ScaledImpedance, boundaries)           
+        self.fitobjRandnoW  = RandObj        
+        
+        self.Zfit = RandObj.predict(self.Freq)*Scale
+        fitparams = RandObj.parameters_
+        fitparams[0] *= Scale
+        fitparams[1] *= Scale
+        fitparams[2] /= Scale        
+        self.circuit = RandObj.circuit
+        self.FitParams = fitparams
+        self.ellist = self._circuitlist(self.circuit)
 
     #Fitting methods to Randles and a capacitor
-    def fit_to_Randles(self,InitGuess=[.01, .005, .001, 200, .1, .9], CPE=True):
+    def fit_to_Randles(self,InitGuess=[.01, .005, .001, 0.5, .1, .9], CPE=True):
         if not CPE:
             InitGuess.pop(5)
         InitGuess[0] = min(self.Zreal)
+        #the order of the elements in the EC
+        # with CPE 
+        # 'R0-p(R1-Wo1,CPe1)'
+        # without CPE
+        # 'R0-p(R1-Wo1,C1)'
+        
         #Scaling should be considered
         Scale = 1e6
         ScaledImpedance = self.impedance/Scale
         RandObj = Randles(initial_guess= InitGuess,CPE=CPE)
-        RandObj.fit(self.Freq,ScaledImpedance)
+        boundaries = ([0, 0, 0, 0, 0, 0],[np.inf, np.inf, np.inf, 1, np.inf, 1])
+        RandObj.fit(self.Freq,ScaledImpedance, boundaries)
         self.fitobjRand = RandObj
         self.Zfit = RandObj.predict(self.Freq)*Scale
         fitparams = RandObj.parameters_
@@ -386,7 +423,7 @@ class ImpedanceData:
         fitparams[2] = fitparams[2]*Scale
         fitparams[4] = fitparams[4]/Scale
         self.circuit = RandObj.circuit
-        self.FitParams = RandObj.parameters_
+        self.FitParams = fitparams
         self._circuitlist(self.circuit)
         
         
@@ -430,7 +467,7 @@ class ImpedanceData:
         self.FitParams = fitparams
         self.ellist = self._circuitlist(self.circuit)
         
-
+    
         
         
     def _circuitlist(self, circuit):
