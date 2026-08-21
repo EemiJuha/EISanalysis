@@ -15,6 +15,7 @@ import tkinter as tk
 #import numpy as np
 import getroot
 from drsizecalculator import calculateArea
+import pandas as pd
 #from pathlib import Path
 
 
@@ -187,10 +188,14 @@ def NyquistTest():
     ax = None
     trimmedobjlist = []
     for item in objList:
-        trimmedobj = item.select_frequency_range_by_ind(10, len(objList[0])-2)
+        if item.metadata['InitE']==-1.6:
+            trimmedobj = item.select_frequency_range_by_ind(10, len(objList[0])-8)
+        else:
+            trimmedobj = item.select_frequency_range_by_ind(10, len(objList[0])-2)
+        trimmedobj.metadata = item.metadata
         #trimmedobj.fit_to_Capacitor()
-        trimmedobj.fit_to_Randles_noW()
-        #trimmedobj.fit_to_Randles()
+        #trimmedobj.fit_to_Randles_noW()
+        trimmedobj.fit_to_Randles()
         
         if ax == None:
             fig, ax = trimmedobj.plot_nyquist()
@@ -202,3 +207,7 @@ def NyquistTest():
 
 if __name__ == "__main__":
     objList, trimmedobjlist = NyquistTest()
+    parsDF = pd.DataFrame()
+    for obj in trimmedobjlist:
+        header = obj.metadata['InitE']
+        parsDF[header] = obj.FitParams

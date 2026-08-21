@@ -399,7 +399,7 @@ class ImpedanceData:
         self.ellist = self._circuitlist(self.circuit)
 
     #Fitting methods to Randles and a capacitor
-    def fit_to_Randles(self,InitGuess=[.01, .005, .001, 0.5, .1, .9], CPE=True):
+    def fit_to_Randles(self,InitGuess=[.05, .5, .001, 0.5, .0001, .9], CPE=True):
         if not CPE:
             InitGuess.pop(5)
         InitGuess[0] = min(self.Zreal)
