@@ -196,7 +196,7 @@ def NyquistTest():
         #trimmedobj.fit_to_Capacitor()
         #trimmedobj.fit_to_Randles_noW()
         trimmedobj.fit_to_Randles()
-        
+
         if ax == None:
             fig, ax = trimmedobj.plot_nyquist()
         else:

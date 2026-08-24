@@ -399,7 +399,7 @@ class ImpedanceData:
         self.ellist = self._circuitlist(self.circuit)
 
     #Fitting methods to Randles and a capacitor
-    def fit_to_Randles(self,InitGuess=[.05, .5, .001, 0.5, .0001, .9], CPE=True):
+    def fit_to_Randles(self,InitGuess=[.5, .5, .001, 0.5, .0001, .9], CPE=True):
         if not CPE:
             InitGuess.pop(5)
         InitGuess[0] = min(self.Zreal)
@@ -413,8 +413,14 @@ class ImpedanceData:
         Scale = 1e6
         ScaledImpedance = self.impedance/Scale
         RandObj = Randles(initial_guess= InitGuess,CPE=CPE)
-        boundaries = ([0, 0, 0, 0, 0, 0],[np.inf, np.inf, np.inf, 1, np.inf, 1])
+        boundaries = ([0, 0, 0, 0.4, 0, 0],[np.inf, np.inf, np.inf, 0.75, np.inf, 1])
         RandObj.fit(self.Freq,ScaledImpedance, boundaries)
+        count = 0
+        while count < 11:
+            newparams = RandObj.parameters_
+            RandObj = Randles(initial_guess=newparams, CPE=CPE)
+            RandObj.fit(self.Freq,ScaledImpedance,boundaries)
+            count += 1
         self.fitobjRand = RandObj
         self.Zfit = RandObj.predict(self.Freq)*Scale
         fitparams = RandObj.parameters_
