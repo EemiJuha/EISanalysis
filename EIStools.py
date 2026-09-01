@@ -431,7 +431,7 @@ class ImpedanceData:
         self.circuit = RandObj.circuit
         self.FitParams = fitparams
         self._circuitlist(self.circuit)
-        
+        self.ellist = self._circuitlist(self.circuit)
         
     def fit_to_Capacitor(self,InitGuess=[.1, .0001, .9],CPE=True):
         if not CPE:
@@ -481,7 +481,7 @@ class ImpedanceData:
         method that takes the circuit string as an argument
         and converts it into a list of strings corresponding to the circuit 
         elements in order of appearance
-        needs to be expanded if there will be other elements but R, C and CPE
+        needs to be expanded if there will be other elements besides R, C and CPE
         '''
         Rpositions = [match.start() for match in re.finditer("R",circuit)]
         Cpositions = [match.start() for match in re.finditer("C", circuit)]

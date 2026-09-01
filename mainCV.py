@@ -32,10 +32,10 @@ for file in fileNameList:
     try:
        if objList == []:
            dataObj = CVtool.from_file(file)
-           dataObj.updateArea()
+           #dataObj.updateArea()
        else:
            dataObj = CVtool.from_file(file)
-           dataObj.Area = objList[0].Area
+           #dataObj.Area = objList[0].Area
        objList.append(dataObj)
     except:
          continue

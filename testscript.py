@@ -16,6 +16,7 @@ import tkinter as tk
 import getroot
 from drsizecalculator import calculateArea
 import pandas as pd
+import matplotlib.pyplot as plt
 #from pathlib import Path
 
 
@@ -188,14 +189,14 @@ def NyquistTest():
     ax = None
     trimmedobjlist = []
     for item in objList:
-        if item.metadata['InitE']==-1.6:
+        if item.metadata['InitE']==-1.65:
             trimmedobj = item.select_frequency_range_by_ind(10, len(objList[0])-8)
         else:
             trimmedobj = item.select_frequency_range_by_ind(10, len(objList[0])-2)
         trimmedobj.metadata = item.metadata
         #trimmedobj.fit_to_Capacitor()
-        #trimmedobj.fit_to_Randles_noW()
-        trimmedobj.fit_to_Randles()
+        trimmedobj.fit_to_Randles_noW()
+        #trimmedobj.fit_to_Randles()
 
         if ax == None:
             fig, ax = trimmedobj.plot_nyquist()
@@ -211,3 +212,17 @@ if __name__ == "__main__":
     for obj in trimmedobjlist:
         header = obj.metadata['InitE']
         parsDF[header] = obj.FitParams
+        
+    
+    
+    #for plotting the column names of parsDF have to be the x axis
+    colnames = list(parsDF)
+    # sort of equivalent circuit value matrix
+    ECVmat = parsDF.values.tolist()
+    figs, axs = [], []
+    #for i in ECVmat:
+     #   fig, ax = plt.subplots()
+        
+    
+    
+    
