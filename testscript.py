@@ -220,9 +220,10 @@ if __name__ == "__main__":
     # sort of equivalent circuit value matrix
     ECVmat = parsDF.values.tolist()
     figs, axs = [], []
+#    for label, 
     #for i in ECVmat:
      #   fig, ax = plt.subplots()
-        
+     
     
     
     

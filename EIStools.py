@@ -396,7 +396,7 @@ class ImpedanceData:
         fitparams[2] /= Scale        
         self.circuit = RandObj.circuit
         self.FitParams = fitparams
-        self.ellist = self._circuitlist(self.circuit)
+        self._circuitlist(self.circuit)
 
     #Fitting methods to Randles and a capacitor
     def fit_to_Randles(self,InitGuess=[.5, .5, .001, 0.5, .0001, .9], CPE=True):
@@ -431,7 +431,7 @@ class ImpedanceData:
         self.circuit = RandObj.circuit
         self.FitParams = fitparams
         self._circuitlist(self.circuit)
-        self.ellist = self._circuitlist(self.circuit)
+        #self.ellist = self._circuitlist(self.circuit)
         
     def fit_to_Capacitor(self,InitGuess=[.1, .0001, .9],CPE=True):
         if not CPE:
@@ -471,7 +471,7 @@ class ImpedanceData:
         fitparams[0] = fitparams[0]*Scale
         fitparams[1] = fitparams[1]/Scale
         self.FitParams = fitparams
-        self.ellist = self._circuitlist(self.circuit)
+        self._circuitlist(self.circuit)
         
     
         
